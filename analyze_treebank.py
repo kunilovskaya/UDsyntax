@@ -43,20 +43,20 @@ sentences = []
 
 current_sentence = [] # определяем пустой список
 for line in fileinput.input(): # итерируем строки из обрабатываемого файла
-    if line.strip() == '': # если пустая строка
-        if current_sentence: #  список пустой же перед первой строкой
-            sentences.append(current_sentence)
+    if line.strip() == '': # что делать есть строка пустая:
+        if current_sentence: #  и при этом в списке уже что-то записано
+            sentences.append(current_sentence) # то добавляем в другой список sentences содержимое списка current_sentences
         current_sentence = [] # обнуляем список
-        if len(sentences) % 1000 == 0: # if the number of sentences can by devided by 1K without a remainder. В этом случае, т.е. после каждого 1000-ного предложения печатай месседж. Удобно!
+        if len(sentences) % 1000 == 0: # if the number of sents can by devided by 1K without a remainder. В этом случае, т.е. после каждого 1000-ного предложения печатай месседж. Удобно!
             print('I have already read %s sentences' % len(sentences), file=sys.stderr)
         continue
     if line.strip().startswith('#'):
         continue
     res = line.strip().split('\t')
     (identifier, token, lemma, upos, xpos, feats, head, rel, misc1, misc2) = res
-    if '.' in identifier:
+    if '.' in identifier: # ignore empty nodes possible in the enhanced representations
         continue
-    current_sentence.append((float(identifier), float(head), token, rel))
+    current_sentence.append((float(identifier), float(head), token, rel)) # во всех остальных случаях имеем дело со строкой по отдельному слову
 
 if current_sentence:
     sentences.append(current_sentence)
