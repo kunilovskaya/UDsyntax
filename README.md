@@ -1,5 +1,6 @@
 # UDsyntax
 nonprojectivity.py
+#! python3
 calculates 
 -percentage of non-projective dependencies in a treebank (or any .conllu) to all dependencies
 -percentage of sentences (=trees) with such dependencies 
