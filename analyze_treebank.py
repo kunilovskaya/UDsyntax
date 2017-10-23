@@ -32,8 +32,11 @@ sentences = []
 current_sentence = []
 for line in fileinput.input():
     if line.strip() == '':
-        sentences.append(current_sentence)
+        if current_sentence:
+            sentences.append(current_sentence)
         current_sentence = []
+        if len(sentences) % 100 == 0:
+            print('I have already read %s sentences' % len(sentences))
         continue
     if line.strip().startswith('#'):
         continue
@@ -43,12 +46,16 @@ for line in fileinput.input():
         continue
     current_sentence.append((float(identifier), float(head), token, rel))
 
-sentences.append(current_sentence)
+if current_sentence:
+    sentences.append(current_sentence)
 
 nonprojectivities = []
 non_arcs = []
 
 for i in range(len(sentences)):
+    if i % 100 == 0:
+        print('I have already analyzed %s sentences' % i)
+
     sentence = sentences[i]
     # print(' '.join([w[2] for w in sentence]), file=sys.stderr)
     non_proj = nonprojectivity(sentence)
@@ -64,12 +71,12 @@ for i in range(len(sentences)):
 
     relations_counter = relations_counter + rel_distribution
 
+print('Non-projective sentences:', np.average(nonprojectivities))
+print('Non-projective arcs:', np.average(non_arcs))
+
 # Averaging probabilities of arc labels
 for key in relations_counter:
     relations_counter[key] /= len(sentences)
 
 for rel in sorted(relations):
     print(rel, relations_counter[rel])
-
-print('Non-projective sentences:', np.average(nonprojectivities))
-print('Non-projective arcs:', np.average(non_arcs))
