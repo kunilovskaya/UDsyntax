@@ -3,6 +3,7 @@ import fileinput
 from itertools import permutations
 from collections import Counter
 import numpy as np
+import sys
 
 
 def nonprojectivity(tree):
@@ -36,7 +37,7 @@ for line in fileinput.input():
             sentences.append(current_sentence)
         current_sentence = []
         if len(sentences) % 100 == 0:
-            print('I have already read %s sentences' % len(sentences))
+            print('I have already read %s sentences' % len(sentences), file=sys.stderr)
         continue
     if line.strip().startswith('#'):
         continue
@@ -54,7 +55,7 @@ non_arcs = []
 
 for i in range(len(sentences)):
     if i % 100 == 0:
-        print('I have already analyzed %s sentences' % i)
+        print('I have already analyzed %s sentences' % i, file=sys.stderr)
 
     sentence = sentences[i]
     # print(' '.join([w[2] for w in sentence]), file=sys.stderr)
