@@ -29,7 +29,7 @@ def relation_distribution(tree):
     # Converting to probability distribution
     total = sum(distribution.values())
     for key in distribution:
-        distribution[key] /= total
+        distribution[key] /= total # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
     return distribution
 
 
@@ -41,13 +41,13 @@ relations = {rel: [] for rel in relations}  # Here will go probabilities of arc 
 
 sentences = []
 
-current_sentence = []
-for line in fileinput.input():
-    if line.strip() == '':
-        if current_sentence:
+current_sentence = [] # определяем пустой список
+for line in fileinput.input(): # итерируем строки из обрабатываемого файла
+    if line.strip() == '': # если пустая строка
+        if current_sentence: #  список пустой же перед первой строкой
             sentences.append(current_sentence)
-        current_sentence = []
-        if len(sentences) % 1000 == 0:
+        current_sentence = [] # обнуляем список
+        if len(sentences) % 1000 == 0: # if the number of sentences can by devided by 1K without a remainder. В этом случае, т.е. после каждого 1000-ного предложения печатай месседж. Удобно!
             print('I have already read %s sentences' % len(sentences), file=sys.stderr)
         continue
     if line.strip().startswith('#'):
@@ -64,7 +64,7 @@ if current_sentence:
 nonprojectivities = []
 non_arcs = []
 
-for i in range(len(sentences)):
+for i in range(len(sentences)): # why not for sentence in sentences:
     if i % 1000 == 0:
         print('I have already analyzed %s sentences' % i, file=sys.stderr)
 
