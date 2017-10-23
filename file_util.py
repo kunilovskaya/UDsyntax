@@ -14,7 +14,7 @@ ID,FORM,LEMMA,CPOSTAG,POSTAG,FEATS,HEAD,DEPREL,DEPS,MISC=range(COLCOUNT)
 COLNAMES=u"ID,FORM,LEMMA,CPOSTAG,POSTAG,FEATS,HEAD,DEPREL,DEPS,MISC".split(u",")
 
 
-def in_out(args,multiple_files=False):
+def in_out(args,multiple_files=True):
     """Open the input/output data streams. If multiple_files is set to
     True, returns an iterator over lines. If set to False, returns an open file.
     This distinction is needed because validator.py checks the newlines property and
@@ -27,7 +27,7 @@ def in_out(args,multiple_files=False):
     else: #File name given
         if multiple_files:
             inp_raw=fileinput.input(files=args.input,mode="U")
-            inp=(line.decode("utf-8") for line in inp_raw)
+            inp=(line for line in inp_raw) #.decode("utf-8")
         else:
             inp_raw=open(args.input,mode="U")
             inp=codecs.getreader("utf-8")(inp_raw)
@@ -41,10 +41,10 @@ def in_out(args,multiple_files=False):
 
 def print_tree(comments,tree,out):
     if comments:
-        print >> out, u"\n".join(comments)
+        print(out, u"\n".join(comments))
     for cols in tree:
-        print >> out, u"\t".join(cols)
-    print >> out
+        print(out, u"\t".join(cols))
+    print(out)
 
 def trees(inp):
     """
@@ -66,12 +66,12 @@ def trees(inp):
         elif line[0].isdigit():
             cols=line.split(u"\t")
             if len(cols)!=COLCOUNT:
-                print >> sys.stderr, u"Line %d: The line has %d columns, but %d are expected. Giving up."%(line_counter+1,len(cols),COLCOUNT)
+                print(sys.stderr, u"Line %d: The line has %d columns, but %d are expected. Giving up."%(line_counter+1,len(cols),COLCOUNT))
                 sys.exit(1)
             lines.append(cols)
         else: #A line which is not a comment, nor a token/word, nor empty. That's bad!
             #TODO warn!
-            print >> sys.stderr, u"Line %d not conllu: Giving up."%(line_counter+1)
+            print(sys.stderr, u"Line %d not conllu: Giving up."%(line_counter+1))
             sys.exit(1) #Give a non-zero exit code
     else: #end of file
         if comments or lines: #Looks like a forgotten empty line at the end of the file, well, okay...
