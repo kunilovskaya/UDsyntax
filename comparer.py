@@ -4,17 +4,15 @@ from scipy import stats
 import pandas as pd
 from os.path import basename
 
-treebank0 = sys.argv[1]
-treebank1 = sys.argv[2]
+# *.stats.txt files
+treebank_stats0 = sys.argv[1]
+treebank_stats1 = sys.argv[2]
 
-metrics = {}
-
-
-data0 = pd.read_csv(treebank0, sep='\t')
-data1 = pd.read_csv(treebank1, sep='\t')
+data0 = pd.read_csv(treebank_stats0, sep='\t')
+data1 = pd.read_csv(treebank_stats1, sep='\t')
 
 
-print('Feature\t%s\t%s\tt-value\tp-value' % (basename(treebank0), basename(treebank1)))
+print('Feature\t%s\t%s\tt-value\tp-value' % (basename(treebank_stats0), basename(treebank_stats1)))
 for row0, row1 in zip(data0.iterrows(), data1.iterrows()):
     feature = row0[1]['Feature']
     average0 = row0[1]['Average']
