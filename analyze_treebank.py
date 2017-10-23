@@ -47,7 +47,7 @@ for line in fileinput.input():
         if current_sentence:
             sentences.append(current_sentence)
         current_sentence = []
-        if len(sentences) % 100 == 0:
+        if len(sentences) % 1000 == 0:
             print('I have already read %s sentences' % len(sentences), file=sys.stderr)
         continue
     if line.strip().startswith('#'):
@@ -65,7 +65,7 @@ nonprojectivities = []
 non_arcs = []
 
 for i in range(len(sentences)):
-    if i % 100 == 0:
+    if i % 1000 == 0:
         print('I have already analyzed %s sentences' % i, file=sys.stderr)
 
     sentence = sentences[i]
