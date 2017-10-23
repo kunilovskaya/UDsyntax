@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 import fileinput
-from itertools import permutations
-from collections import Counter
-import numpy as np
 import sys
+from itertools import permutations
+
+import numpy as np
 
 
 def nonprojectivity(tree):
@@ -22,11 +22,22 @@ def nonprojectivity(tree):
     return nonprojectivesentence, nonprojective_ratio
 
 
+def relation_distribution(tree):
+    sent_relations = [w[3] for w in tree]
+    distribution = {rel: sent_relations.count(rel) for rel in relations}
+
+    # Converting to probability distribution
+    total = sum(distribution.values())
+    for key in distribution:
+        distribution[key] /= total
+    return distribution
+
+
 relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop mark nmod ' \
             'appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan goeswith ' \
             'reparandum punct root dep'.split()
 
-relations_counter = Counter({rel: 0 for rel in relations})  # Here will go probabilities of arc labels
+relations = {rel: [] for rel in relations}  # Here will go probabilities of arc labels
 
 sentences = []
 
@@ -62,22 +73,16 @@ for i in range(len(sentences)):
     non_proj = nonprojectivity(sentence)
     nonprojectivities.append(non_proj[0])
     non_arcs.append(non_proj[1])
-    sent_relations = [w[3] for w in sentence]
-    rel_distribution = Counter({rel: sent_relations.count(rel) for rel in relations})
 
-    # Converting to probability distribution
-    total = sum(rel_distribution.values())
-    for key in rel_distribution:
-        rel_distribution[key] /= total
+    rel_distribution = relation_distribution(sentence)
+    for rel in relations:
+        relations[rel].append(rel_distribution[rel])
 
-    relations_counter = relations_counter + rel_distribution
+print('Feature\tAverage\tDeviation\tObservations')
+print('Non-projective sentences\t', np.average(nonprojectivities), '\t', np.std(nonprojectivities), '\t',
+      len(nonprojectivities))
+print('Non-projective arcs\t', np.average(non_arcs), '\t', np.std(non_arcs), '\t', len(non_arcs))
 
-print('Non-projective sentences:', np.average(nonprojectivities))
-print('Non-projective arcs:', np.average(non_arcs))
-
-# Averaging probabilities of arc labels
-for key in relations_counter:
-    relations_counter[key] /= len(sentences)
-
-for rel in sorted(relations):
-    print(rel, relations_counter[rel])
+for rel in sorted(relations.keys()):
+    data = relations[rel]
+    print(rel + '\t', np.average(data), '\t', np.std(data), '\t', len(data))
