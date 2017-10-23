@@ -29,7 +29,7 @@ def relation_distribution(tree):
     # Converting to probability distribution
     total = sum(distribution.values())
     for key in distribution:
-        distribution[key] /= total
+        distribution[key] /= total # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
     return distribution
 
 
@@ -43,11 +43,11 @@ sentences = []
 
 current_sentence = []
 for line in fileinput.input():
-    if line.strip() == '':
-        if current_sentence:
+    if line.strip() == '': #то же что line = line.strip()?
+        if current_sentence: # if file has not ended? 
             sentences.append(current_sentence)
         current_sentence = []
-        if len(sentences) % 1000 == 0:
+        if len(sentences) % 1000 == 0: # if the number of sentences can by devided by 1K without a remainder. Why?
             print('I have already read %s sentences' % len(sentences), file=sys.stderr)
         continue
     if line.strip().startswith('#'):
@@ -64,7 +64,7 @@ if current_sentence:
 nonprojectivities = []
 non_arcs = []
 
-for i in range(len(sentences)):
+for i in range(len(sentences)): # why not for sentence in sentences:
     if i % 1000 == 0:
         print('I have already analyzed %s sentences' % i, file=sys.stderr)
 
