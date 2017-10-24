@@ -25,14 +25,6 @@ class Stats(object):
         self.word_count = 0 # number of lines=words in a tree is the number of rels=arcs
         self.tree_count = 0 # number of sentences
 
-# create an unordered list of unique values from the lines in the input conllu
-# ud_cats=set()
-# with codecs.open(os.path.join(THISDIR, "data", "feats.ud"), "r", "utf-8") as f:
-#     for line in f:
-#         line = line.strip()
-#         if not line or line.startswith(u"#"):
-#             continue
-#         ud_cats.add(line)
 
     def count_cols(self,cols):
         if cols[ID].isdigit() or u"." in cols[ID]: #word or empty word
@@ -40,7 +32,7 @@ class Stats(object):
 
     def print_basic_stats(self,out):
         print("Tree count: ", self.tree_count)
-        print("Word count: ", self.word_count)
+        print("Word (=arcs) count: ", self.word_count)
 
 if __name__=="__main__":
     opt_parser = argparse.ArgumentParser(description='Script for basic stats generation. Assumes a validated input.')
@@ -128,7 +120,7 @@ if __name__=="__main__":
 
     except:
         traceback.print_exc()
-        print(sys.stderr, "\n\n ------- STATS MAY BE EMPTY OR INCOMPLETE ----------")
+        print("\n\n ------- STATS MAY BE EMPTY OR INCOMPLETE ----------", file=sys.stderr)
         pass
     if args.stats:
         stats.print_basic_stats(out)

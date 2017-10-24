@@ -14,7 +14,7 @@ ID,FORM,LEMMA,CPOSTAG,POSTAG,FEATS,HEAD,DEPREL,DEPS,MISC=range(COLCOUNT)
 COLNAMES=u"ID,FORM,LEMMA,CPOSTAG,POSTAG,FEATS,HEAD,DEPREL,DEPS,MISC".split(u",")
 
 
-def in_out(args,multiple_files=True):
+def in_out(args,multiple_files=False):
     """Open the input/output data streams. If multiple_files is set to
     True, returns an iterator over lines. If set to False, returns an open file.
     This distinction is needed because validator.py checks the newlines property and
@@ -66,12 +66,12 @@ def trees(inp):
         elif line[0].isdigit():
             cols=line.split(u"\t")
             if len(cols)!=COLCOUNT:
-                print(sys.stderr, u"Line %d: The line has %d columns, but %d are expected. Giving up."%(line_counter+1,len(cols),COLCOUNT))
+                print(u"Line %d: The line has %d columns, but %d are expected. Giving up."%(line_counter+1,len(cols),COLCOUNT), file=sys.stderr)
                 sys.exit(1)
             lines.append(cols)
         else: #A line which is not a comment, nor a token/word, nor empty. That's bad!
             #TODO warn!
-            print(sys.stderr, u"Line %d not conllu: Giving up."%(line_counter+1))
+            print(u"Line %d not conllu: Giving up."%(line_counter+1), file=sys.stderr)
             sys.exit(1) #Give a non-zero exit code
     else: #end of file
         if comments or lines: #Looks like a forgotten empty line at the end of the file, well, okay...
