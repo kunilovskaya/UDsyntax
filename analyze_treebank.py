@@ -61,8 +61,12 @@ def graph_metrics(tree):
     density = sentence_graph.density()
     diameter = sentence_graph.diameter()
 
-    # layout = sentence_graph.layout_kamada_kawai()
-    # plot(communities, layout=layout)
+    # Uncomment to produce visuals
+    #if 0.6 < av_degree < 0.85 and len(tree) > 4:
+    #    print(' '.join([w[2] for w in tree]), file=sys.stderr)
+    #    print(av_degree, file=sys.stderr)
+    #    layout = sentence_graph.layout_kamada_kawai()
+    #    plot(communities, layout=layout)
     return av_degree, max_degree, len(communities), comm_size, av_path_length, density, diameter
 
 
