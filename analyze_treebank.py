@@ -4,18 +4,28 @@ from itertools import permutations
 from collections import OrderedDict
 import numpy as np
 from igraph import *
+import matplotlib.pyplot as plt
 
 arpack_options.maxiter = 3000
 
+filtering = True  # Filter out punctuation and short sentences?
+min_length = 3
+
 
 def nonprojectivity(tree):
-    arcs = len(tree)
+    if filtering:
+        arcs = len([w for w in tree if w[3] != 'punct'])
+    else:
+        arcs = len(tree)
     n_arcs = 0
     nonprojectivesentence = False
     pairs = permutations(tree, 2)
     for pair in pairs:
         (dep0, head0, token0, rel0) = pair[0]
         (dep1, head1, token1, rel1) = pair[1]
+        if filtering:
+            if rel0 == 'punct' or rel1 == 'punct':
+                continue
         if dep0 < dep1 < head0 < head1 or head1 < head0 < dep1 < dep0 or dep1 < head0 < head1 < dep0 \
                 or dep0 < head1 < head0 < dep1 or head0 < dep1 < dep0 < head1 or head1 < dep0 < dep1 < head0:
             nonprojectivesentence = True
@@ -38,13 +48,25 @@ def relation_distribution(tree):
 
 def graph_metrics(tree):
     sentence_graph = Graph(len(tree) + 1)
+    if filtering:
+        n_tokens = len([w for w in tree if w[3] != 'punct']) + 1
+    else:
+        n_tokens = len(tree) + 1
     sentence_graph = sentence_graph.as_directed()
     sentence_graph.vs["name"] = ['ROOT'] + [word[2] for word in tree]
     sentence_graph.vs["label"] = sentence_graph.vs["name"]
-    edges = [(word[1], word[0]) for word in tree]
+    if filtering:
+        edges = [(word[1], word[0]) for word in tree if word[3] != 'punct']
+    else:
+        edges = [(word[1], word[0]) for word in tree]
+    # print([w[0] for w in tree])
+    # print(edges)
     sentence_graph.add_edges(edges)
     sentence_graph.vs.find("ROOT")["shape"] = 'diamond'
     sentence_graph.vs.find("ROOT")["size"] = 40
+    if filtering:
+        disconnected = [vertex.index for vertex in sentence_graph.vs if vertex.degree() == 0]
+        sentence_graph.delete_vertices(disconnected)
 
     av_degree = np.average(sentence_graph.degree(type="out"))
     max_degree = max(sentence_graph.degree(type="out"))
@@ -54,7 +76,7 @@ def graph_metrics(tree):
     except InternalError:
         communities = ['dummy']
 
-    comm_size = len(tree)/len(communities)
+    comm_size = n_tokens / len(communities)
 
     av_path_length = sentence_graph.average_path_length()
 
@@ -62,18 +84,25 @@ def graph_metrics(tree):
     diameter = sentence_graph.diameter()
 
     # Uncomment to produce visuals
-    #if 0.6 < av_degree < 0.85 and len(tree) > 4:
-    #    print(' '.join([w[2] for w in tree]), file=sys.stderr)
+    # if 0.6 < av_degree < 0.85 and len(tree) > 4:
+    # if True:
+    #   print(' '.join([w[2] for w in tree]), file=sys.stderr)
     #    print(av_degree, file=sys.stderr)
-    #    layout = sentence_graph.layout_kamada_kawai()
-    #    plot(communities, layout=layout)
+    #    gr_layout = sentence_graph.layout_kamada_kawai()
+    #    plot(communities, layout=gr_layout)
     return av_degree, max_degree, len(communities), comm_size, av_path_length, density, diameter
 
 
-relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop mark nmod ' \
-            'appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan goeswith ' \
-            'reparandum punct root dep acl:relcl flat:name nsubj:pass nummod:gov aux:pass flat:foreign ' \
-            'obl:agent nummod:entity'.split()
+if filtering:
+    relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop mark ' \
+                'nmod appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan goeswith ' \
+                'reparandum root dep acl:relcl flat:name nsubj:pass nummod:gov aux:pass flat:foreign ' \
+                'obl:agent nummod:entity'.split()
+else:
+    relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop ' \
+                'mark nmod appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan ' \
+                'goeswith reparandum punct root dep acl:relcl flat:name nsubj:pass nummod:gov aux:pass flat:foreign ' \
+                'obl:agent nummod:entity'.split()
 
 relations = {rel: [] for rel in relations}  # Here will go probabilities of arc labels
 
@@ -117,6 +146,9 @@ metrics = OrderedDict([('Non-projective sentences', []),
                        ('Diameter', []),
                        ])
 
+if filtering:
+    sentences = [s for s in sentences if len(s) >= min_length]
+
 for i in range(len(sentences)):  # why not for sentence in sentences:
     if i % 1000 == 0:
         print('I have already analyzed %s sentences' % i, file=sys.stderr)
@@ -143,6 +175,11 @@ for i in range(len(sentences)):  # why not for sentence in sentences:
 print('Feature\tAverage\tDeviation\tObservations')
 for metric in metrics:
     print(metric, '\t', np.average(metrics[metric]), '\t', np.std(metrics[metric]), '\t', len(metrics[metric]))
+    # plot metric histogram if needed
+    # plt.hist(metrics[metric], 50)
+    # plt.grid(True)
+    # plt.title(metric)
+    # plt.show()
 
 for rel in sorted(relations.keys()):
     data = relations[rel]
