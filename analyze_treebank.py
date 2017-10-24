@@ -2,7 +2,7 @@
 import fileinput
 import sys
 from itertools import permutations
-
+from igraph import *
 import numpy as np
 
 
@@ -31,6 +31,21 @@ def relation_distribution(tree):
     for key in distribution:
         distribution[key] /= total # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
     return distribution
+
+def graph_metrics(tree):
+    sentence_graph = Graph(len(tree)+1)
+    sentence_graph = sentence_graph.as_directed()
+    sentence_graph.vs["name"] = ['ROOT']+[word[2] for word in tree]
+    sentence_graph.vs["label"] = sentence_graph.vs["name"]
+    edges = [(int(word[1]), int(word[0])) for word in tree]
+    sentence_graph.add_edges(edges)
+    sentence_graph.vs.find("ROOT")["color"]= 'green'
+
+    # layout = sentence_graph.layout_kamada_kawai()
+    # plot(sentence_graph, layout=layout)
+
+    return sentence_graph
+
 
 
 relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop mark nmod ' \
@@ -63,6 +78,8 @@ if current_sentence:
 
 nonprojectivities = []
 non_arcs = []
+average_degrees = []
+max_degrees = []
 
 for i in range(len(sentences)): # why not for sentence in sentences:
     if i % 1000 == 0:
@@ -78,10 +95,16 @@ for i in range(len(sentences)): # why not for sentence in sentences:
     for rel in relations:
         relations[rel].append(rel_distribution[rel])
 
+    sgraph = graph_metrics(sentence)
+    average_degrees.append(np.average(sgraph.degree(type="out")))
+    max_degrees.append(max(sgraph.degree(type="out")))
+
 print('Feature\tAverage\tDeviation\tObservations')
 print('Non-projective sentences\t', np.average(nonprojectivities), '\t', np.std(nonprojectivities), '\t',
       len(nonprojectivities))
 print('Non-projective arcs\t', np.average(non_arcs), '\t', np.std(non_arcs), '\t', len(non_arcs))
+print('Average out-degree\t', np.average(average_degrees), '\t', np.std(average_degrees), '\t', len(average_degrees))
+print('Max out-degree\t', np.average(max_degrees), '\t', np.std(max_degrees), '\t', len(max_degrees))
 
 for rel in sorted(relations.keys()):
     data = relations[rel]
