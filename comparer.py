@@ -8,17 +8,18 @@ from os.path import basename
 treebank_stats0 = sys.argv[1]
 treebank_stats1 = sys.argv[2]
 
-data0 = pd.read_csv(treebank_stats0, sep='\t') # reads into a DataFrame: rows of index and values
+data0 = pd.read_csv(treebank_stats0, sep='\t')  # reads into a DataFrame: rows of index and values
 data1 = pd.read_csv(treebank_stats1, sep='\t')
 
-
 print('Feature\t%s\t%s\tt-value\tp-value' % (basename(treebank_stats0), basename(treebank_stats1)))
-for row0, row1 in zip(data0.iterrows(), data1.iterrows()): #.iterrows(): Iterate over DataFrame rows as (index, Series) pairs; zip iterates over rows of two dataframes in parallel?
-    # print(row0)
-    feature = row0[1]['Feature'] # get the content of the colun=mn Feature from the first DataFrame (data0), why row0[1] is used? First row in the row0 iterator?
+# .iterrows(): Iterate over DataFrame rows as (index, Series) pairs;
+# zip iterates over rows of two dataframes in parallel?
+for row0, row1 in zip(data0.iterrows(), data1.iterrows()):
+    # get the content of the colunmn Feature from the first DataFrame (data0), why row0[1] is used?
+    # First row in the row0 iterator?
+    feature = row0[1]['Feature']
 
     average0 = row0[1]['Average']
-    #print( type(average0 ), average0)
     average1 = row1[1]['Average']
     std0 = row0[1]['Deviation']
     std1 = row1[1]['Deviation']
@@ -28,4 +29,4 @@ for row0, row1 in zip(data0.iterrows(), data1.iterrows()): #.iterrows(): Iterate
         ttest = ('nan', 'nan')
     else:
         ttest = stats.ttest_ind_from_stats(average1, std1, len1, average0, std0, len0, equal_var=False)
-    print(feature+'\t', average0, '\t', average1, '\t', ttest[0], '\t', ttest[1])
+    print(feature + '\t', average0, '\t', average1, '\t', ttest[0], '\t', ttest[1])
