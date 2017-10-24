@@ -1,9 +1,9 @@
 #!/usr/bin/python3
 import fileinput
-import sys
 from itertools import permutations
-from igraph import *
+
 import numpy as np
+from igraph import *
 
 
 def nonprojectivity(tree):
@@ -29,23 +29,24 @@ def relation_distribution(tree):
     # Converting to probability distribution
     total = sum(distribution.values())
     for key in distribution:
-        distribution[key] /= total # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
+        distribution[
+            key] /= total  # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
     return distribution
 
+
 def graph_metrics(tree):
-    sentence_graph = Graph(len(tree)+1)
+    sentence_graph = Graph(len(tree) + 1)
     sentence_graph = sentence_graph.as_directed()
-    sentence_graph.vs["name"] = ['ROOT']+[word[2] for word in tree]
+    sentence_graph.vs["name"] = ['ROOT'] + [word[2] for word in tree]
     sentence_graph.vs["label"] = sentence_graph.vs["name"]
     edges = [(int(word[1]), int(word[0])) for word in tree]
     sentence_graph.add_edges(edges)
-    sentence_graph.vs.find("ROOT")["color"]= 'green'
+    sentence_graph.vs.find("ROOT")["color"] = 'green'
 
     # layout = sentence_graph.layout_kamada_kawai()
     # plot(sentence_graph, layout=layout)
 
     return sentence_graph
-
 
 
 relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop mark nmod ' \
@@ -56,22 +57,27 @@ relations = {rel: [] for rel in relations}  # Here will go probabilities of arc 
 
 sentences = []
 
-current_sentence = [] # определяем пустой список
-for line in fileinput.input(): # итерируем строки из обрабатываемого файла
-    if line.strip() == '': # что делать есть строка пустая:
-        if current_sentence: #  и при этом в списке уже что-то записано
-            sentences.append(current_sentence) # то добавляем в другой список sentences содержимое списка current_sentences
-        current_sentence = [] # обнуляем список
-        if len(sentences) % 1000 == 0: # if the number of sents can by devided by 1K without a remainder. В этом случае, т.е. после каждого 1000-ного предложения печатай месседж. Удобно!
+current_sentence = []  # определяем пустой список
+for line in fileinput.input():  # итерируем строки из обрабатываемого файла
+    if line.strip() == '':  # что делать есть строка пустая:
+        if current_sentence:  # и при этом в списке уже что-то записано
+            sentences.append(
+                current_sentence)  # то добавляем в другой список sentences содержимое списка current_sentences
+        current_sentence = []  # обнуляем список
+
+        # if the number of sents can by devided by 1K without a remainder.
+        # В этом случае, т.е. после каждого 1000-ного предложения печатай месседж. Удобно!
+        if len(sentences) % 1000 == 0:
             print('I have already read %s sentences' % len(sentences), file=sys.stderr)
         continue
     if line.strip().startswith('#'):
         continue
     res = line.strip().split('\t')
     (identifier, token, lemma, upos, xpos, feats, head, rel, misc1, misc2) = res
-    if '.' in identifier: # ignore empty nodes possible in the enhanced representations
+    if '.' in identifier:  # ignore empty nodes possible in the enhanced representations
         continue
-    current_sentence.append((float(identifier), float(head), token, rel)) # во всех остальных случаях имеем дело со строкой по отдельному слову
+    current_sentence.append((float(identifier), float(head), token,
+                             rel))  # во всех остальных случаях имеем дело со строкой по отдельному слову
 
 if current_sentence:
     sentences.append(current_sentence)
@@ -81,7 +87,7 @@ non_arcs = []
 average_degrees = []
 max_degrees = []
 
-for i in range(len(sentences)): # why not for sentence in sentences:
+for i in range(len(sentences)):  # why not for sentence in sentences:
     if i % 1000 == 0:
         print('I have already analyzed %s sentences' % i, file=sys.stderr)
 
