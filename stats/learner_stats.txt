@@ -1,6 +1,3 @@
-[(1, 2, 'Формальность', 'nsubj'), (2, 0, 'уходит', 'root'), (3, 2, '.', 'punct')]
-[(1, 3, 'Это', 'nsubj'), (2, 3, 'так', 'advmod'), (3, 0, 'просто', 'root'), (4, 3, '.', 'punct')]
-[(1, 2, 'Монополистическая', 'amod'), (2, 0, 'конкуренция', 'root'), (3, 2, '.', 'punct')]
 Feature	Average	Deviation	Observations
 Non-projective sentences 	 0.0633112057862 	 0.243521861458 	 10093
 Non-projective arcs 	 0.0168790282211 	 0.0884944504438 	 10093

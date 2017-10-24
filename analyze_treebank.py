@@ -52,7 +52,6 @@ def graph_metrics(tree):
     try:
         communities = sentence_graph.community_leading_eigenvector()
     except InternalError:
-        print(tree)
         communities = ['dummy']
 
     comm_size = len(tree)/len(communities)
