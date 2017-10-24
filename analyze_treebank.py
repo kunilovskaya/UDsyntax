@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 import fileinput
 from itertools import permutations
-
+from collections import OrderedDict
 import numpy as np
 from igraph import *
+
+arpack_options.maxiter = 3000
 
 
 def nonprojectivity(tree):
@@ -27,10 +29,10 @@ def relation_distribution(tree):
     distribution = {rel: sent_relations.count(rel) for rel in relations}
 
     # Converting to probability distribution
+    # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
     total = sum(distribution.values())
     for key in distribution:
-        distribution[
-            key] /= total  # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
+        distribution[key] /= total
     return distribution
 
 
@@ -39,14 +41,30 @@ def graph_metrics(tree):
     sentence_graph = sentence_graph.as_directed()
     sentence_graph.vs["name"] = ['ROOT'] + [word[2] for word in tree]
     sentence_graph.vs["label"] = sentence_graph.vs["name"]
-    edges = [(int(word[1]), int(word[0])) for word in tree]
+    edges = [(word[1], word[0]) for word in tree]
     sentence_graph.add_edges(edges)
-    sentence_graph.vs.find("ROOT")["color"] = 'green'
+    sentence_graph.vs.find("ROOT")["shape"] = 'diamond'
+    sentence_graph.vs.find("ROOT")["size"] = 40
+
+    av_degree = np.average(sentence_graph.degree(type="out"))
+    max_degree = max(sentence_graph.degree(type="out"))
+
+    try:
+        communities = sentence_graph.community_leading_eigenvector()
+    except InternalError:
+        print(tree)
+        communities = ['dummy']
+
+    comm_size = len(tree)/len(communities)
+
+    av_path_length = sentence_graph.average_path_length()
+
+    density = sentence_graph.density()
+    diameter = sentence_graph.diameter()
 
     # layout = sentence_graph.layout_kamada_kawai()
-    # plot(sentence_graph, layout=layout)
-
-    return sentence_graph
+    # plot(communities, layout=layout)
+    return av_degree, max_degree, len(communities), comm_size, av_path_length, density, diameter
 
 
 relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop mark nmod ' \
@@ -55,14 +73,16 @@ relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl
 
 relations = {rel: [] for rel in relations}  # Here will go probabilities of arc labels
 
+# Now let's start analyzing the treebank
+
 sentences = []
 
 current_sentence = []  # определяем пустой список
 for line in fileinput.input():  # итерируем строки из обрабатываемого файла
     if line.strip() == '':  # что делать есть строка пустая:
         if current_sentence:  # и при этом в списке уже что-то записано
-            sentences.append(
-                current_sentence)  # то добавляем в другой список sentences содержимое списка current_sentences
+            # то добавляем в другой список sentences содержимое списка current_sentences
+            sentences.append(current_sentence)
         current_sentence = []  # обнуляем список
 
         # if the number of sents can by devided by 1K without a remainder.
@@ -76,16 +96,22 @@ for line in fileinput.input():  # итерируем строки из обра�
     (identifier, token, lemma, upos, xpos, feats, head, rel, misc1, misc2) = res
     if '.' in identifier:  # ignore empty nodes possible in the enhanced representations
         continue
-    current_sentence.append((float(identifier), float(head), token,
-                             rel))  # во всех остальных случаях имеем дело со строкой по отдельному слову
+    # во всех остальных случаях имеем дело со строкой по отдельному слову
+    current_sentence.append((int(identifier), int(head), token, rel))
 
 if current_sentence:
     sentences.append(current_sentence)
 
-nonprojectivities = []
-non_arcs = []
-average_degrees = []
-max_degrees = []
+metrics = OrderedDict([('Non-projective sentences', []),
+                       ('Non-projective arcs', []),
+                       ('Average out-degree', []),
+                       ('Max out-degree', []),
+                       ('Number of communities', []),
+                       ('Average community size', []),
+                       ('Average path length', []),
+                       ('Density', []),
+                       ('Diameter', []),
+                       ])
 
 for i in range(len(sentences)):  # why not for sentence in sentences:
     if i % 1000 == 0:
@@ -94,23 +120,25 @@ for i in range(len(sentences)):  # why not for sentence in sentences:
     sentence = sentences[i]
     # print(' '.join([w[2] for w in sentence]), file=sys.stderr)
     non_proj = nonprojectivity(sentence)
-    nonprojectivities.append(non_proj[0])
-    non_arcs.append(non_proj[1])
+    metrics['Non-projective sentences'].append(non_proj[0])
+    metrics['Non-projective arcs'].append(non_proj[1])
 
     rel_distribution = relation_distribution(sentence)
     for rel in relations:
         relations[rel].append(rel_distribution[rel])
 
     sgraph = graph_metrics(sentence)
-    average_degrees.append(np.average(sgraph.degree(type="out")))
-    max_degrees.append(max(sgraph.degree(type="out")))
+    metrics['Average out-degree'].append(sgraph[0])
+    metrics['Max out-degree'].append(sgraph[1])
+    metrics['Number of communities'].append(sgraph[2])
+    metrics['Average community size'].append(sgraph[3])
+    metrics['Average path length'].append(sgraph[4])
+    metrics['Density'].append(sgraph[5])
+    metrics['Diameter'].append(sgraph[6])
 
 print('Feature\tAverage\tDeviation\tObservations')
-print('Non-projective sentences\t', np.average(nonprojectivities), '\t', np.std(nonprojectivities), '\t',
-      len(nonprojectivities))
-print('Non-projective arcs\t', np.average(non_arcs), '\t', np.std(non_arcs), '\t', len(non_arcs))
-print('Average out-degree\t', np.average(average_degrees), '\t', np.std(average_degrees), '\t', len(average_degrees))
-print('Max out-degree\t', np.average(max_degrees), '\t', np.std(max_degrees), '\t', len(max_degrees))
+for metric in metrics:
+    print(metric, '\t', np.average(metrics[metric]), '\t', np.std(metrics[metric]), '\t', len(metrics[metric]))
 
 for rel in sorted(relations.keys()):
     data = relations[rel]
