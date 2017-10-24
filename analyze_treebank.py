@@ -68,7 +68,8 @@ def graph_metrics(tree):
 
 relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop mark nmod ' \
             'appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan goeswith ' \
-            'reparandum punct root dep'.split()
+            'reparandum punct root dep acl:relcl flat:name nsubj:pass nummod:gov aux:pass flat:foreign ' \
+            'obl:agent nummod:entity'.split()
 
 relations = {rel: [] for rel in relations}  # Here will go probabilities of arc labels
 
