@@ -11,11 +11,10 @@ arpack_options.maxiter = 3000
 filtering = True  # Filter out punctuation and short sentences?
 min_length = 3
 
-# mode = 'overview'
-mode = 'perfile'
+modes = ['overview', 'perfile', 'persentence']
 
+mode = modes[1]
 
-# mode = 'persentence'
 
 def nonprojectivity(tree):
     if filtering:
