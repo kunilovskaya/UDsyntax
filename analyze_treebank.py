@@ -11,6 +11,11 @@ arpack_options.maxiter = 3000
 filtering = True  # Filter out punctuation and short sentences?
 min_length = 3
 
+# mode = 'overview'
+mode = 'perfile'
+
+
+# mode = 'persentence'
 
 def nonprojectivity(tree):
     if filtering:
@@ -145,7 +150,6 @@ metrics = OrderedDict([('Non-projective sentences', []),
                        ('Density', []),
                        ('Diameter', []),
                        ])
-
 if filtering:
     sentences = [s for s in sentences if len(s) >= min_length]
 
@@ -172,15 +176,41 @@ for i in range(len(sentences)):  # why not for sentence in sentences:
     metrics['Density'].append(sgraph[5])
     metrics['Diameter'].append(sgraph[6])
 
-print('Feature\tAverage\tDeviation\tObservations')
-for metric in metrics:
-    print(metric, '\t', np.average(metrics[metric]), '\t', np.std(metrics[metric]), '\t', len(metrics[metric]))
-    # plot metric histogram if needed
-    # plt.hist(metrics[metric], 50)
-    # plt.grid(True)
-    # plt.title(metric)
-    # plt.show()
+if mode == 'persentence':
+    print('Sentence\t', '\t'.join(metrics.keys()) + '\t', '\t'.join(sorted(relations.keys())), '\tClass')
+    for sent in range(len(sentences)):
+        print(sent, '\t', end=' ')
+        for metric in metrics:
+            print(metrics[metric][sent], end='\t')
+        for rel in sorted(relations.keys()):
+            data = relations[rel][sent]
+            print(data, end='\t')
 
-for rel in sorted(relations.keys()):
-    data = relations[rel]
-    print(rel + '\t', np.average(data), '\t', np.std(data), '\t', len(data))
+        class_label = fileinput.filename().split('/')[0]  # the directory
+        print(class_label)
+
+elif mode == 'perfile':
+    # print('File\t', '\t'.join(metrics.keys())+'\t', '\t'.join(sorted(relations.keys())), '\tClass')
+    print(fileinput.filename() + '\t', end=' ')
+    for metric in metrics:
+        print(np.average(metrics[metric]), end='\t')
+    for rel in sorted(relations.keys()):
+        data = np.average(relations[rel])
+        print(data, end='\t')
+
+    class_label = fileinput.filename().split('/')[0]  # the directory
+    print(class_label)
+
+
+elif mode == 'overview':
+    print('Feature\tAverage\tDeviation\tObservations')
+    for metric in metrics:
+        print(metric, '\t', np.average(metrics[metric]), '\t', np.std(metrics[metric]), '\t', len(metrics[metric]))
+        # plot metric histogram if needed
+        # plt.hist(metrics[metric], 50)
+        # plt.grid(True)
+        # plt.title(metric)
+        # plt.show()
+    for rel in sorted(relations.keys()):
+        data = relations[rel]
+        print(rel + '\t', np.average(data), '\t', np.std(data), '\t', len(data))
