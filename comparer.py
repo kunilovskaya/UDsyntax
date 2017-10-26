@@ -15,10 +15,9 @@ print('Feature\t%s\t%s\tt-value\tp-value' % (basename(treebank_stats0), basename
 # .iterrows(): Iterate over DataFrame rows as (index, Series) pairs;
 # zip iterates over rows of two dataframes in parallel?
 for row0, row1 in zip(data0.iterrows(), data1.iterrows()):
-    # get the content of the colunmn Feature from the first DataFrame (data0), why row0[1] is used?
+    # get the content of the first cell in column (Feature, etc) from the first DataFrame (data0); row0[1] ignores the tech info for each row in a DataFrame
     # First row in the row0 iterator?
     feature = row0[1]['Feature']
-
     average0 = row0[1]['Average']
     average1 = row1[1]['Average']
     std0 = row0[1]['Deviation']

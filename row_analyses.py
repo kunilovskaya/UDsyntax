@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 #import fileinput
 from os.path import basename
-import sys, codecs
+import sys
+
+#enhance syntactic analysis by pulling out values for grammatical categories
 
 input = sys.argv[1]
 
-trees = codecs.open(input, 'r', 'utf-8').readlines()
+trees = open(input, 'r').readlines()
 
 allsubj = 0
 nsubj_nom = 0
