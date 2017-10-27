@@ -13,7 +13,7 @@ min_length = 3
 
 modes = ['overview', 'perfile', 'persentence']
 
-mode = modes[1]
+mode = modes[0]
 
 
 def nonprojectivity(tree):
