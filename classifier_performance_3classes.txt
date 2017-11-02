@@ -1,0 +1,11 @@
+Dummy:
+Average F1 on 10-fold cross-validation: 0.343 (+/- 0.065)
+
+SVM:
+Average F1 on 10-fold cross-validation: 0.737 (+/- 0.080)
+
+Logistic Regression:
+Average F1 on 10-fold cross-validation: 0.666 (+/- 0.068)
+
+DecisionTree:
+Average F1 on 10-fold cross-validation: 0.591 (+/- 0.115)
