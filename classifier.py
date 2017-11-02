@@ -67,7 +67,7 @@ print('Features:', X.shape[1], file=sys.stderr)
 print('We use these best features (ranked by their importance):', used_features, file=sys.stderr)
 
 # Optionally scaling the features
-X = preprocessing.scale(X)
+scaled_X = preprocessing.scale(X)
 
 # Choosing the classifier:
 
@@ -93,8 +93,8 @@ algo = svm.SVC(class_weight="balanced")
 
 print("The data is ready! Let's train some models...", file=sys.stderr)
 clf = make_pipeline(preprocessing.StandardScaler(), algo)
-classifier = clf.fit(X, group)
-predicted = classifier.predict(X)
+classifier = clf.fit(scaled_X, group)
+predicted = classifier.predict(scaled_X)
 
 print("Accuracy on the training set:", round(accuracy_score(train["group"], predicted), 3), file=sys.stderr)
 
