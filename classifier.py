@@ -13,7 +13,8 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
-
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 datafile = 'm_bigtable.tsv.gz'  # The path to the Big Table file
 
@@ -95,6 +96,23 @@ print("The data is ready! Let's train some models...", file=sys.stderr)
 clf = make_pipeline(preprocessing.StandardScaler(), algo)
 classifier = clf.fit(scaled_X, group)
 predicted = classifier.predict(scaled_X)
+
+pca = PCA(n_components=2)
+X_r = pca.fit(X).transform(X)
+
+# Here goes the 2-D plotting of the data...
+plt.figure()
+colors = ['navy', 'darkorange']
+if len(classifier.classes_) == 3:
+    colors = ['navy', 'turquoise', 'darkorange']
+lw = 2
+for color, target_name in zip(colors, classifier.classes_):
+    plt.scatter(X_r[group == target_name, 0], X_r[group == target_name, 1], s=5, color=color,
+                label=target_name, alpha=.8, lw=lw)
+plt.legend(loc='best', scatterpoints=1)
+plt.show()
+# Plotting finished.
+
 
 print("Accuracy on the training set:", round(accuracy_score(train["group"], predicted), 3), file=sys.stderr)
 
