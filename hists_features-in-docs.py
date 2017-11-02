@@ -1,6 +1,7 @@
 #!/bin/python
 # coding: utf-8
 # slices a DataFrame and prints three hists to one axes
+# paths relative to /home/masha/aaa/oslo
 import sys,codecs,os
 import pandas as pd
 import numpy as np
@@ -25,5 +26,18 @@ for feat in col_labels[2:]:
     ax.set(xlabel="probability of %s" %(feat), ylabel='how often this probability occurs in the data')
     plt.legend()
     plt.tight_layout()
-    plt.savefig('/home/masha/aaa/oslo/plots/%s.png' %(feat), format='png')
+    # plt.savefig('/plots/%s.png' %(feat), format='png')
     plt.show()
+
+
+# and boxplot the same collections on the same parameters
+
+sns.set_style("whitegrid")
+sns.set_context('paper')
+#colors = dict(en="lightgray", ru="darkgray")
+ax = sns.boxplot(x="class", y="MDD", data=df, palette="PRGn", notch=True, showmeans=True)
+# for print version substitute palette="PRGn" for color="gray" change the outfile name!
+plt.ylabel('average mean dependency distance')
+
+# plt.savefig('/plots/MDD_boxplot.png', format='png')
+plt.show()
