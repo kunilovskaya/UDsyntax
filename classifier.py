@@ -13,20 +13,24 @@ from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
-from sklearn import tree
-import graphviz
-from sklearn.externals.six import StringIO
-from IPython.display import Image
-from sklearn.tree import export_graphviz
-import pydotplus
+
 
 datafile = 'm_bigtable.tsv.gz'  # The path to the Big Table file
 
-mode = int(sys.argv[1])
+# State the classification mode in the first argument!
+modes = ['3class', 'natVStran', 'natVSlearn', 'natVSprof', 'profVSlearn']
 
-features = int(sys.argv[2])# How many best features you want to use? (max=46)
+mode = modes[int(sys.argv[1])]
+
+# State how many best features you want to use in the 2nd argument! (max=46)
+features = int(sys.argv[2])
 
 train = pd.read_csv(datafile, header=0, delimiter="\t")
+
+if mode == 'natVSlearn':
+    train = train[train.acl != 'prof']
+
+
 group = train['class']
 
 X = train[train.keys()[2:]]
@@ -35,31 +39,38 @@ ff = SelectKBest(k=features).fit(X, group)
 X = SelectKBest(k=features).fit_transform(X, group)
 top_ranked_features = sorted(enumerate(ff.scores_), key=lambda x: x[1], reverse=True)[:features]
 top_ranked_features_indices = [x[0] for x in top_ranked_features]
-used_features = [train.keys()[x+2] for x in top_ranked_features_indices]
+used_features = [train.keys()[x + 2] for x in top_ranked_features_indices]
 print('We use these best features (ranked by their importance):', used_features, file=sys.stderr)
 
 # Optionally print feature table size
-print(datafile, 'Train data:', X.shape, file=sys.stderr)
+print(datafile, 'Train data:', file=sys.stderr)
+print('Instances:', X.shape[0], file=sys.stderr)
+print('Features:', X.shape[1], file=sys.stderr)
 
 # Optionally scaling the features
 X = preprocessing.scale(X)
 
 # Choosing the classifier:
 
-#algo = DummyClassifier()
-#algo = LogisticRegression(n_jobs=4, class_weight='balanced', max_iter=1000, solver='saga', multi_class="multinomial")
+# algo = DummyClassifier()
+# algo = LogisticRegression(n_jobs=4, class_weight='balanced', max_iter=1000, solver='saga', multi_class="multinomial")
 # algo = DecisionTreeClassifier(class_weight="balanced", max_depth=10)
 algo = svm.SVC(class_weight="balanced")
 
 # Uncomment this if you want to draw decision tree plot
-#a = algo.fit(X, group)
-#dot_data = StringIO()
-#export_graphviz(a, out_file=dot_data,
+# from sklearn import tree
+# import graphviz
+# from sklearn.externals.six import StringIO
+# from sklearn.tree import export_graphviz
+# import pydotplus
+# a = algo.fit(X, group)
+# dot_data = StringIO()
+# export_graphviz(a, out_file=dot_data,
 #               feature_names=used_features,
 #                class_names=a.classes_,
 #               filled=True, rounded=True,
 #                special_characters=True)
-#pydotplus.graph_from_dot_data(dot_data.getvalue()).write_png(str(len(used_features))+".png")
+# pydotplus.graph_from_dot_data(dot_data.getvalue()).write_png(str(len(used_features))+".png")
 
 clf = make_pipeline(preprocessing.StandardScaler(), algo)
 
@@ -73,9 +84,8 @@ print(classification_report(train["class"], predicted), file=sys.stderr)
 print('Confusion matrix on the training set:', file=sys.stderr)
 print(confusion_matrix(train["class"], predicted), file=sys.stderr)
 
-
 print('=====', file=sys.stderr)
-print('Here goes cross-validation', file=sys.stderr)
+print('Here goes cross-validation. Please wait a bit...', file=sys.stderr)
 
 scoring = ['precision_macro', 'recall_macro', 'f1_macro']
 cv_scores = cross_validate(clf, X, group, cv=10, scoring=scoring)
