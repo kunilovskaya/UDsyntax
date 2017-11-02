@@ -17,35 +17,54 @@ from sklearn.pipeline import make_pipeline
 
 datafile = 'm_bigtable.tsv.gz'  # The path to the Big Table file
 
+train = pd.read_csv(datafile, header=0, delimiter="\t")
+
 # State the classification mode in the first argument!
 modes = ['3class', 'natVStran', 'natVSlearn', 'natVSprof', 'profVSlearn']
 
-mode = modes[int(sys.argv[1])]
+mode = int(sys.argv[1])
+try:
+    mode = modes[mode]
+except IndexError:
+    print('Incorrect mode!', file=sys.stderr)
+    exit()
 
 # State how many best features you want to use in the 2nd argument! (max=46)
 features = int(sys.argv[2])
 
-train = pd.read_csv(datafile, header=0, delimiter="\t")
+if features < 1 or features > len(train.columns)-2:
+    print('Incorrect number of features!', file=sys.stderr)
+    exit()
 
+# Dataset preparation, depending on the chosen mode
 if mode == 'natVSlearn':
-    train = train[train.acl != 'prof']
+    train = train[train.group != 'prof']
+elif mode == 'natVSprof':
+    train = train[train.group != 'learners']
+elif mode == 'profVSlearn':
+    train = train[train.group != 'rnc']
+elif mode == 'natVStran':
+    train.loc[train.group == 'prof', 'group'] = 'transl'
+    train.loc[train.group == 'learners', 'group'] = 'transl'
 
-
-group = train['class']
+group = train['group']
 
 X = train[train.keys()[2:]]
 
+# Feature selection
 ff = SelectKBest(k=features).fit(X, group)
 X = SelectKBest(k=features).fit_transform(X, group)
 top_ranked_features = sorted(enumerate(ff.scores_), key=lambda x: x[1], reverse=True)[:features]
 top_ranked_features_indices = [x[0] for x in top_ranked_features]
 used_features = [train.keys()[x + 2] for x in top_ranked_features_indices]
-print('We use these best features (ranked by their importance):', used_features, file=sys.stderr)
 
-# Optionally print feature table size
-print(datafile, 'Train data:', file=sys.stderr)
+# Optionally print dataset characteristics:
+print(datafile, file=sys.stderr)
+print('Our mode:', mode, file=sys.stderr)
+print('Train data:', file=sys.stderr)
 print('Instances:', X.shape[0], file=sys.stderr)
 print('Features:', X.shape[1], file=sys.stderr)
+print('We use these best features (ranked by their importance):', used_features, file=sys.stderr)
 
 # Optionally scaling the features
 X = preprocessing.scale(X)
@@ -72,17 +91,17 @@ algo = svm.SVC(class_weight="balanced")
 #                special_characters=True)
 # pydotplus.graph_from_dot_data(dot_data.getvalue()).write_png(str(len(used_features))+".png")
 
+print("The data is ready! Let's train some models...", file=sys.stderr)
 clf = make_pipeline(preprocessing.StandardScaler(), algo)
-
 classifier = clf.fit(X, group)
 predicted = classifier.predict(X)
 
-print("Accuracy on the training set:", round(accuracy_score(train["class"], predicted), 3), file=sys.stderr)
+print("Accuracy on the training set:", round(accuracy_score(train["group"], predicted), 3), file=sys.stderr)
 
-print(classification_report(train["class"], predicted), file=sys.stderr)
+print(classification_report(train["group"], predicted), file=sys.stderr)
 
 print('Confusion matrix on the training set:', file=sys.stderr)
-print(confusion_matrix(train["class"], predicted), file=sys.stderr)
+print(confusion_matrix(train["group"], predicted), file=sys.stderr)
 
 print('=====', file=sys.stderr)
 print('Here goes cross-validation. Please wait a bit...', file=sys.stderr)
