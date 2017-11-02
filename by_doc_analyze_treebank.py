@@ -43,6 +43,8 @@ metrics = OrderedDict([('Non-projective sentences', []),
                            ('Average path length', []),
                            ('Density', []),
                            ('Diameter', []),
+                            ('MHD', []),
+                            ('MDD', []),
                            ])
 
 #add doc and corpus names to the output
@@ -60,6 +62,7 @@ arpack_options.maxiter = 3000
 
 filtering = True  # Filter out punctuation and short sentences?
 min_length = 3
+
 
 def nonprojectivity(tree):
     if filtering:
@@ -99,16 +102,16 @@ def relation_distribution(tree):
 
 
 def graph_metrics(tree):
-    sentence_graph = Graph(len(tree) + 1)
+    sentence_graph = Graph(len(tree) + 1) #why is it called before filtering?
     if filtering:
         n_tokens = len([w for w in tree if w[3] != 'punct']) + 1
     else:
         n_tokens = len(tree) + 1
     sentence_graph = sentence_graph.as_directed()
-    sentence_graph.vs["name"] = ['ROOT'] + [word[2] for word in tree]
-    sentence_graph.vs["label"] = sentence_graph.vs["name"]
+    sentence_graph.vs["name"] = ['ROOT'] + [word[2] for word in tree] #string of vertices' attributes called name
+    sentence_graph.vs["label"] = sentence_graph.vs["name"] #the name attribute is renamed label, because in drawing vertex labels are taken from the label attribute by default
     if filtering:
-        edges = [(word[1], word[0]) for word in tree if word[3] != 'punct']
+        edges = [(word[1], word[0]) for word in tree if word[3] != 'punct'] #(int(identifier), int(head), token, rel)
     else:
         edges = [(word[1], word[0]) for word in tree]
     # print([w[0] for w in tree])
@@ -122,6 +125,32 @@ def graph_metrics(tree):
 
     av_degree = np.average(sentence_graph.degree(type="out"))
     max_degree = max(sentence_graph.degree(type="out"))
+
+    '''
+        calculate processing difficulty=mean hierachical distance(MHD) as average value of all path lengths
+        traveling from the root to all nodes along the dependency edges (Jing, Liu 2015 : 164)
+    '''
+    parts = sentence_graph.components(mode=WEAK)
+    #print(len(parts))
+    # print(type(parts))
+    if len(parts) == 1:
+        nodes = [word[2] for word in tree if word[3] != 'punct' and word[3] != 'root']
+        all_hds = []  # or a counter = 0?
+        for node in nodes:
+            hd = sentence_graph.shortest_paths_dijkstra('ROOT', node, mode=ALL)
+            # print(node, hd[0][0])
+            # print(type(hd[0][0]))# why the result is a two-level nested list?
+            all_hds.append(hd[0][0])
+        if all_hds:  # this is a generic test for 'is everything ok?' which here takes the form of testing whther the list is empty
+            mhd = np.average(all_hds)
+        else:
+            mhd = None
+    else:
+        mhd = None
+        #print('!!!')
+        #print(tree)
+        #gr_layout = sentence_graph.layout_kamada_kawai()
+        #plot(sentence_graph, layout=gr_layout)
 
     try:
         communities = sentence_graph.community_leading_eigenvector()
@@ -142,10 +171,37 @@ def graph_metrics(tree):
             # print(av_degree, file=sys.stderr)
             # gr_layout = sentence_graph.layout_kamada_kawai()
             # plot(communities, layout=gr_layout)
-    return av_degree, max_degree, len(communities), comm_size, av_path_length, density, diameter
+    return av_degree, max_degree, len(communities), comm_size, av_path_length, density, diameter, mhd
+
+def calculate_mdd(tree):
+    """
+     calculate comprehension difficulty=mean dependency distance(MDD) as “the distance between words and their parents,
+     measured in terms of intervening words.” (Hudson 1995 : 16)
+    """
+    s = [q for q in tree if q[3] != 'punct']  # that's an elegant way to create a new list of sentence quadriplets! without repeating any code
+    inbtw = []
+    for head_ind in range(len(s)):  # use s-index to refer to heads
+        w = s[head_ind]
+        if w[3] == 'root':  # we don't want -2 for each row containing root
+            continue
+        head = w[1]
+
+        for dep_ind in range(len(s)):  # use s-index to refer to dependants
+            w1 = s[dep_ind]
+            if head == w1[0]:
+                break
+        dd = abs(head_ind - dep_ind) - 1
+        # print(w[2], w1[2], dd, '\n')
+        inbtw.append(abs(dd))
+
+    # print(' '.join([w[2] for w in s])) # why does this print an arbitrary num of sents and then the values for them (because it had file=sys.stderr!)
+    # print(s)
+    # print(len(inbtw))
+    mdd = np.average(inbtw)  # use this function instead of overt division of list sum by list length: if smth is wrong you'll get a warning!
+    return mdd  # a list of mdd for each sentence
 
 # Now let's start analyzing the treebank as a set of documents
-bank = [f for f in os.listdir(many) if f.endswith('.conllu')]
+bank = [f for f in os.listdir(many) if f.endswith('.conllu')]  # and f.startswith('511329')]  # that's how to limit the input data to just offensive files
 for f in bank:
     #collect sentence-based counts
     words = open(many + f, 'r').readlines()
@@ -169,7 +225,7 @@ for f in bank:
         (identifier, token, lemma, upos, xpos, feats, head, rel, misc1, misc2) = res
         if '.' in identifier:  # ignore empty nodes that are used in the enhanced representations
             continue
-        current_sentence.append((int(identifier), int(head), token, rel))
+        current_sentence.append((int(identifier), int(head), token, rel))# this is a list of data pieces from conllu that gets into [sentences]
 
     if current_sentence:
         sentences.append(current_sentence)
@@ -187,6 +243,18 @@ for f in bank:
         #     print('I have already analyzed %s sentences' % i, file=sys.stderr)
         sentence = sentences[i]
         # print(' '.join([w[2] for w in sentence]), file=sys.stderr)
+        sgraph = graph_metrics(sentence)
+        if not sgraph[7]:
+            # print('YEs!')
+            continue
+        metrics['Average out-degree'].append(sgraph[0])
+        metrics['Max out-degree'].append(sgraph[1])
+        metrics['Number of communities'].append(sgraph[2])
+        metrics['Average community size'].append(sgraph[3])
+        metrics['Average path length'].append(sgraph[4])
+        metrics['Density'].append(sgraph[5])
+        metrics['Diameter'].append(sgraph[6])
+        metrics['MHD'].append(sgraph[7])
         non_proj = nonprojectivity(sentence)
 
         metrics['Non-projective sentences'].append(non_proj[0])
@@ -196,14 +264,9 @@ for f in bank:
 
         for rel in relations.keys():
             relations[rel].append(rel_distribution[rel])
-        sgraph = graph_metrics(sentence)
-        metrics['Average out-degree'].append(sgraph[0])
-        metrics['Max out-degree'].append(sgraph[1])
-        metrics['Number of communities'].append(sgraph[2])
-        metrics['Average community size'].append(sgraph[3])
-        metrics['Average path length'].append(sgraph[4])
-        metrics['Density'].append(sgraph[5])
-        metrics['Diameter'].append(sgraph[6])
+
+        compre_diff = calculate_mdd(sentence)
+        metrics['MDD'].append(compre_diff)
 
     doc = os.path.splitext(os.path.basename(many+f))[0]#without extention
     cl = os.path.abspath(many).split('/')[folder]
@@ -212,9 +275,11 @@ for f in bank:
     this is needed to avoid printing a new line after each file or printing all files to one line
     '''
     allvalues = []
+
     for rel in relations.keys():
         data = np.average(relations[rel])  # pulls out lists of values and averages them for sents in this bank
         allvalues.append(str(data))
+    # print(metrics)
     for metric in metrics:
         data = np.average(metrics[metric])
         allvalues.append(str(data))

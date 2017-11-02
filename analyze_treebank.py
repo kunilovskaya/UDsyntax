@@ -89,11 +89,11 @@ def graph_metrics(tree):
 
     # Uncomment to produce visuals
     # if 0.9 < av_degree < 0.98 and len(tree) > 4:
-    #     if True:
-    #         print(' '.join([w[2] for w in tree]), file=sys.stderr)
+    if True:
+    #print(' '.join([w[2] for w in tree]), file=sys.stderr)
     #         print(av_degree, file=sys.stderr)
-    #         gr_layout = sentence_graph.layout_kamada_kawai()
-    #         plot(communities, layout=gr_layout)
+        gr_layout = sentence_graph.layout_kamada_kawai()
+        plot(communities, layout=gr_layout)
     return av_degree, max_degree, len(communities), comm_size, av_path_length, density, diameter
 
 
