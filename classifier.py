@@ -102,7 +102,7 @@ X_r = pca.fit(X).transform(X)
 
 # Here goes the 2-D plotting of the data...
 plt.figure()
-colors = ['navy', 'darkorange']
+colors = ['darkorange', 'navy']
 if len(classifier.classes_) == 3:
     colors = ['navy', 'turquoise', 'darkorange']
 lw = 2
