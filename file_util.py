@@ -14,7 +14,7 @@ ID,FORM,LEMMA,CPOSTAG,POSTAG,FEATS,HEAD,DEPREL,DEPS,MISC=range(COLCOUNT)
 COLNAMES=u"ID,FORM,LEMMA,CPOSTAG,POSTAG,FEATS,HEAD,DEPREL,DEPS,MISC".split(u",")
 
 
-def in_out(args,multiple_files=False):
+def in_out(args,multiple_files=True):
     """Open the input/output data streams. If multiple_files is set to
     True, returns an iterator over lines. If set to False, returns an open file.
     This distinction is needed because validator.py checks the newlines property and
@@ -27,16 +27,18 @@ def in_out(args,multiple_files=False):
     else: #File name given
         if multiple_files:
             inp_raw=fileinput.input(files=args.input,mode="U")
-            inp=(line for line in inp_raw) #.decode("utf-8")
+            inp=(line for line in inp_raw)  # lose .decode("utf-8") in python3
+            print("Yes, this is the case with input", file=sys.stderr)
         else:
             inp_raw=open(args.input,mode="U")
             inp=codecs.getreader("utf-8")(inp_raw)
     #inp is now an iterator over lines, giving unicode strings
 
     if args.output is None or args.output=="-": #stdout
-        out=codecs.getwriter("utf-8")(sys.stdout)
+        out=codecs.getwriter("utf-8")(sys.stdout.detach())  # add .detach() in python3
+        print("Yes, this is the case with output", file=sys.stderr)
     else: #File name given
-        out=codecs.open(args.output,"w","utf-8")
+        out=codecs.open(args.output,"w","utf-8")  # add "wb"?
     return inp,out
 
 def print_tree(comments,tree,out):

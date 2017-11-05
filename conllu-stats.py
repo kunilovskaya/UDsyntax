@@ -1,5 +1,10 @@
+#! /usr/bin/python3
+# this is a working version of the UD supplied script adopted for python3, mind that this script required file_util.py that has been manipulated too
+# don't forget to supply --stats parameter to this file or nothing prints out!!!
+# usage: python3 conllu-stats.py --stats ~/aaa/oslo/data_scripts/bydoc/rnc/*
+
+
 import sys
-import re
 import file_util
 from file_util import FORM,LEMMA,CPOSTAG,FEATS,DEPREL,DEPS #column index for the columns we'll need
 import argparse
@@ -50,15 +55,15 @@ class Stats(object):
         print("Tree count: ", self.tree_count, file=out)
         print("Word count: ", self.word_count, file=out)
         print("Token count:", self.token_count, file=out)
-        langspec=sum(1 for deprel in self.deprel_counter.iterkeys() if u":" in deprel)
+        langspec=sum(1 for deprel in self.deprel_counter.keys() if u":" in deprel)
         print("Dep. relations: %d of which %d language specific"%(len(self.deprel_counter),langspec), file=out)
         print("POS tags:",sum(1 for cat_is_val in self.f_val_counter if cat_is_val.startswith(u"CPOSTAG=")), file=out)
         print("Category=value feature pairs:",sum(1 for cat_is_val in self.f_val_counter if not cat_is_val.startswith(u"CPOSTAG=")), file=out)
 
     def get_stats(self):
         """Returns a dictionary of elementary stats"""
-        langspec=sum(1 for deprel in self.deprel_counter.iterkeys() if u":" in deprel)
-        ud_rels=len(set(deprel.split(u":")[0] for deprel in self.deprel_counter.iterkeys()))
+        langspec=sum(1 for deprel in self.deprel_counter.keys() if u":" in deprel)
+        ud_rels=len(set(deprel.split(u":")[0] for deprel in self.deprel_counter.keys()))  # python3 renamed .iterkeys() into .keys()
         d={"tree_count":self.tree_count,"word_count":self.word_count,"token_count":self.token_count,"deprels":len(self.deprel_counter),"langspec_deprels":langspec, "universal_deprels":ud_rels, "postags":sum(1 for cat_is_val in self.f_val_counter if cat_is_val.startswith(u"CPOSTAG=")),"catvals":sum(1 for cat_is_val in self.f_val_counter if not cat_is_val.startswith(u"CPOSTAG=")),"words_with_lemma_count":self.words_with_lemma_count,"words_with_deps_count":self.words_with_deps_count}
         return d
         
@@ -71,9 +76,9 @@ class Stats(object):
         elif sort=="alph":
             key=lambda x:x[0].lower()
         else:
-            print >> sys.stderr, "Unknown sort order: %s. Use --sort=freq or --sort=alph."
+            print("Unknown sort order: %s. Use --sort=freq or --sort=alph.", file=sys.stderr)
             sys.exit(1)
-        for deprel,count in sorted(self.deprel_counter.iteritems(),key=key):
+        for deprel,count in sorted(self.deprel_counter.items(),key=key):
             if u":" in deprel and u"langspec" in which:
                 print(deprel, file=out)
             if u":" not in deprel and u"UD" in which:
@@ -95,7 +100,7 @@ class Stats(object):
         else:
             print("Unknown sort order: %s. Use --sort=freq or --sort=alph.", file=sys.stderr)
             sys.exit(1)
-        for cat_is_val,count in sorted(self.f_val_counter.iteritems(),key=key):
+        for cat_is_val,count in sorted(self.f_val_counter.items(),key=key):  # python3 renamed .iteritems() into .items()
             cat,val=cat_is_val.split(u"=",1)
             if not cat==u"CPOSTAG" and ((u"UD" in which and cat in ud_cats) or (u"langspec" in which and cat not in ud_cats)):
                 print(cat_is_val, file=sys.stderr)
@@ -123,7 +128,7 @@ if __name__=="__main__":
                 stats.count_cols(cols)
     except:
         traceback.print_exc()
-        print >> sys.stderr, "\n\n ------- STATS MAY BE EMPTY OR INCOMPLETE ----------"
+        print("\n\n ------- STATS MAY BE EMPTY OR INCOMPLETE ----------", file=sys.stderr)
         pass
     if args.stats:
         stats.print_basic_stats(out)
