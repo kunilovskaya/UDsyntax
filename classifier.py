@@ -33,7 +33,7 @@ except IndexError:
 # State how many best features you want to use in the 2nd argument! (max=46)
 features = int(sys.argv[2])
 
-if features < 1 or features > len(train.columns)-2:
+if features < 1 or features > len(train.columns) - 2:
     print('Incorrect number of features!', file=sys.stderr)
     exit()
 
@@ -97,10 +97,39 @@ clf = make_pipeline(preprocessing.StandardScaler(), algo)
 classifier = clf.fit(scaled_X, group)
 predicted = classifier.predict(scaled_X)
 
-pca = PCA(n_components=2)
-X_r = pca.fit(X).transform(X)
+print("Accuracy on the training set:", round(accuracy_score(train["group"], predicted), 3), file=sys.stderr)
+
+print(classification_report(train["group"], predicted), file=sys.stderr)
+
+print('Confusion matrix on the training set:', file=sys.stderr)
+print(confusion_matrix(train["group"], predicted), file=sys.stderr)
+
+print('=====', file=sys.stderr)
+print('Here goes cross-validation. Please wait a bit...', file=sys.stderr)
+
+averaging = False  # Do you want to average the cross-validate metrics?
+
+scoring = ['precision_macro', 'recall_macro', 'f1_macro']
+cv_scores = cross_validate(clf, X, group, cv=10, scoring=scoring)
+
+if averaging:
+    print("Average Precision on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (
+        cv_scores['test_precision_macro'].mean(), cv_scores['test_precision_macro'].std() * 2), file=sys.stderr)
+    print("Average Recall on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (
+        cv_scores['test_recall_macro'].mean(), cv_scores['test_recall_macro'].std() * 2), file=sys.stderr)
+    print("Average F1 on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (
+        cv_scores['test_f1_macro'].mean(), cv_scores['test_f1_macro'].std() * 2), file=sys.stderr)
+else:
+    print("Precision values on 10-fold cross-validation:", file=sys.stderr)
+    print(cv_scores['test_precision_macro'], file=sys.stderr)
+    print("Recall values on 10-fold cross-validation:", file=sys.stderr)
+    print(cv_scores['test_recall_macro'], file=sys.stderr)
+    print("F1 values on 10-fold cross-validation:", file=sys.stderr)
+    print(cv_scores['test_f1_macro'], file=sys.stderr)
 
 # Here goes the 2-D plotting of the data...
+pca = PCA(n_components=2)
+X_r = pca.fit(scaled_X).transform(scaled_X)
 plt.figure()
 colors = ['darkorange', 'navy']
 if len(classifier.classes_) == 3:
@@ -112,23 +141,3 @@ for color, target_name in zip(colors, classifier.classes_):
 plt.legend(loc='best', scatterpoints=1)
 plt.show()
 # Plotting finished.
-
-
-print("Accuracy on the training set:", round(accuracy_score(train["group"], predicted), 3), file=sys.stderr)
-
-print(classification_report(train["group"], predicted), file=sys.stderr)
-
-print('Confusion matrix on the training set:', file=sys.stderr)
-print(confusion_matrix(train["group"], predicted), file=sys.stderr)
-
-print('=====', file=sys.stderr)
-print('Here goes cross-validation. Please wait a bit...', file=sys.stderr)
-
-scoring = ['precision_macro', 'recall_macro', 'f1_macro']
-cv_scores = cross_validate(clf, X, group, cv=10, scoring=scoring)
-print("Average Precision on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (
-    cv_scores['test_precision_macro'].mean(), cv_scores['test_precision_macro'].std() * 2), file=sys.stderr)
-print("Average Recall on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (
-    cv_scores['test_recall_macro'].mean(), cv_scores['test_recall_macro'].std() * 2), file=sys.stderr)
-print("Average F1 on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (
-    cv_scores['test_f1_macro'].mean(), cv_scores['test_f1_macro'].std() * 2), file=sys.stderr)
