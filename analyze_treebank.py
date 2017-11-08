@@ -29,6 +29,8 @@ def nonprojectivity(tree):
     for pair in pairs:
         (dep0, head0, token0, rel0) = pair[0]
         (dep1, head1, token1, rel1) = pair[1]
+        if rel0 == 'root' or rel1 == 'root':
+            continue
         if filtering:
             if rel0 == 'punct' or rel1 == 'punct':
                 continue
