@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# this script does not filter sentences that consist of only root and punct
+# and sentences whose parse trees have more than one component
 import fileinput
 from itertools import permutations
 from collections import OrderedDict
