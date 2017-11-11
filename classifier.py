@@ -94,7 +94,6 @@ algo = svm.SVC(class_weight="balanced")
 
 print("The data is ready! Let's train some models...", file=sys.stderr)
 clf = make_pipeline(preprocessing.StandardScaler(), algo)
-print(type(scaled_X), type(group), file=sys.stderr)
 predicted = classifier.predict(scaled_X)
 
 print("Accuracy on the training set:", round(accuracy_score(train["group"], predicted), 3), file=sys.stderr)
@@ -129,7 +128,6 @@ else:
 
 # Here goes the 2-D plotting of the data...
 pca = PCA(n_components=2)
-print(scaled_X, file=sys.stderr)
 X_r = pca.fit(scaled_X).transform(scaled_X)
 plt.figure()
 colors = ['darkorange', 'navy']
