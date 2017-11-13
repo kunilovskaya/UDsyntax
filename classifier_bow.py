@@ -106,7 +106,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         features = int(sys.argv[2])
 
-    vectorizer = CountVectorizer(lowercase=False, ngram_range=(1, 1))  # State min and max N-grams.
+    vectorizer = CountVectorizer(lowercase=False, ngram_range=(3, 3))  # State min and max N-grams.
     train_data_features = vectorizer.fit_transform(data['text'])
     train_data_features = train_data_features.todense()
     vocabulary = vectorizer.get_feature_names()
@@ -142,13 +142,13 @@ if __name__ == "__main__":
     print('Confusion matrix on the training set:')
     print(confusion_matrix(data["group"], predicted))
 
-    print('=====', file=sys.stderr)
+    print('=====')
     print('Here goes cross-validation. Please wait a bit...')
 
     averaging = True  # Do you want to average the cross-validate metrics?
 
     scoring = ['precision_macro', 'recall_macro', 'f1_macro']
-    cv_scores = cross_validate(clf, train_data_features, groups, cv=10, scoring=scoring)
+    cv_scores = cross_validate(clf, train_data_features, groups, cv=10, scoring=scoring, n_jobs=2)
 
     if averaging:
         print("Average Precision on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (

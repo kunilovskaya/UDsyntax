@@ -16,7 +16,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
-datafile = 'm_bigtable.tsv.gz'  # The path to the Big Table file
+datafile = 'new_m_bigtable.tsv.gz'  # The path to the Big Table file
 
 train = pd.read_csv(datafile, header=0, delimiter="\t")
 
@@ -110,7 +110,7 @@ print('Here goes cross-validation. Please wait a bit...', file=sys.stderr)
 averaging = True  # Do you want to average the cross-validate metrics?
 
 scoring = ['precision_macro', 'recall_macro', 'f1_macro']
-cv_scores = cross_validate(clf, X, group, cv=10, scoring=scoring)
+cv_scores = cross_validate(clf, X, group, cv=10, scoring=scoring, n_jobs=2)
 
 if averaging:
     print("Average Precision on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (
