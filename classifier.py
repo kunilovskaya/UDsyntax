@@ -94,7 +94,7 @@ algo = svm.SVC(class_weight="balanced")
 
 print("The data is ready! Let's train some models...", file=sys.stderr)
 clf = make_pipeline(preprocessing.StandardScaler(), algo)
-classifier = clf.fit(scaled_X, group)
+classifier = algo.fit(scaled_X, group)
 predicted = classifier.predict(scaled_X)
 
 print("Accuracy on the training set:", round(accuracy_score(train["group"], predicted), 3), file=sys.stderr)
@@ -107,7 +107,7 @@ print(confusion_matrix(train["group"], predicted), file=sys.stderr)
 print('=====', file=sys.stderr)
 print('Here goes cross-validation. Please wait a bit...', file=sys.stderr)
 
-averaging = False  # Do you want to average the cross-validate metrics?
+averaging = True  # Do you want to average the cross-validate metrics?
 
 scoring = ['precision_macro', 'recall_macro', 'f1_macro']
 cv_scores = cross_validate(clf, X, group, cv=10, scoring=scoring)
@@ -140,4 +140,5 @@ for color, target_name in zip(colors, classifier.classes_):
                 label=target_name, alpha=.8, lw=lw)
 plt.legend(loc='best', scatterpoints=1)
 plt.show()
+plt.close()
 # Plotting finished.
