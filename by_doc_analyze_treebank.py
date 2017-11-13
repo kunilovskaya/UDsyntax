@@ -5,6 +5,7 @@ from itertools import permutations
 from collections import OrderedDict
 import numpy as np
 from igraph import *
+import itertools
 import matplotlib.pyplot as plt
 
 many = sys.argv[1] # always use final slash for folders
@@ -12,8 +13,8 @@ folder = len(os.path.abspath(many).split('/')) - 1
 filtering = True  # Filter out punctuation and short sentences?
 min_length = 3
 '''
-I have thrown out unobserved relations
-there is no workaround the unoedered nature of dicts, which gets me in trouble with several runs of the same script
+I have thrown out unobserved relations and root
+there is no workaround the unordered nature of dicts, which gets me in trouble with several runs of the same script
 '''
 if filtering:
     relations = OrderedDict([('acl', []), ('acl:relcl', []), ('advcl', []), ('advmod', []), ('amod', []), ('appos', []),
@@ -22,7 +23,7 @@ if filtering:
                              ('flat:foreign', []), ('flat:name', []), ('iobj', []), ('mark', []), ('nmod', []),
                              ('nsubj', []), ('nsubj:pass', []), ('nummod', []), ('nummod:entity', []), ('nummod:gov', []),
                              ('obj', []), ('obl', []), ('obl:agent', []), ('orphan', []), ('parataxis', []),
-                             ('root', []), ('xcomp', []), ])
+                            ('xcomp', []), ])
 else:
     relations = OrderedDict([('acl', []), ('acl:relcl', []), ('advcl', []), ('advmod', []), ('amod', []),
                              ('appos', []), ('aux', []), ('aux:pass', []), ('case', []), ('cc', []), ('ccomp', []),
@@ -35,7 +36,7 @@ else:
                              ('vocative', []), ('xcomp', []), ])
 
 metrics = OrderedDict([('Non-projective sentences', []),
-                           ('Non-projective arcs', []),
+                           ('Non-projectivity', []),
                            ('Average out-degree', []),
                            ('Max out-degree', []),
                            ('Number of communities', []),
@@ -48,7 +49,7 @@ metrics = OrderedDict([('Non-projective sentences', []),
                            ])
 
 #add doc and corpus names to the output
-headers = ['doc', 'class']
+headers = ['doc', 'group']
 
 for rel in relations.keys():
     headers.append(rel)
@@ -60,31 +61,76 @@ print('\n')
 
 arpack_options.maxiter = 3000
 
-filtering = True  # Filter out punctuation and short sentences?
-min_length = 3
 
+# def nonprojectivity(tree):
+#     if filtering:
+#         arcs = len([w for w in tree if w[3] != 'punct'])
+#     else:
+#         arcs = len(tree)
+#     n_arcs = 0
+#     nonprojectivesentence = False
+#
+#     pairs = permutations(tree, 2)
+#     for pair in pairs:
+#         (dep0, head0, token0, rel0) = pair[0]
+#         (dep1, head1, token1, rel1) = pair[1]
+#         if filtering:
+#             if rel0 == 'punct' or rel1 == 'punct':
+#                 continue
+#         if dep0 < dep1 < head0 < head1 or head1 < head0 < dep1 < dep0 or dep1 < head0 < head1 < dep0 \
+#                 or dep0 < head1 < head0 < dep1 or head0 < dep1 < dep0 < head1 or head1 < dep0 < dep1 < head0:
+#             nonprojectivesentence = True
+#             n_arcs += 2 # не имеет смысла считать количество пересекающихся арок, а не количество пересечений, поскольку непроективность это всегда две арки
+#     # кроме того, в случае пересечения одной арки двумя, первая все равно считается дважды и получается 4 вместо 3 (3 было бы правильно, если считать именно арки, а не факты пересечения)
+#     nonprojective_ratio = n_arcs / arcs
+#     return nonprojectivesentence, nonprojective_ratio
 
 def nonprojectivity(tree):
-    if filtering:
-        arcs = len([w for w in tree if w[3] != 'punct'])
-    else:
-        arcs = len(tree)
-    n_arcs = 0
+    in_sent = 0  # resettable counter to mark that the current sent has a non-projective dependency
     nonprojectivesentence = False
-    pairs = permutations(tree, 2)
-    for pair in pairs:
-        (dep0, head0, token0, rel0) = pair[0]
-        (dep1, head1, token1, rel1) = pair[1]
-        if filtering:
-            if rel0 == 'punct' or rel1 == 'punct':
-                continue
-        if dep0 < dep1 < head0 < head1 or head1 < head0 < dep1 < dep0 or dep1 < head0 < head1 < dep0 \
-                or dep0 < head1 < head0 < dep1 or head0 < dep1 < dep0 < head1 or head1 < dep0 < dep1 < head0:
-            nonprojectivesentence = True
-            n_arcs += 2
-    nonprojective_ratio = n_arcs / arcs
-    return nonprojectivesentence, nonprojective_ratio
+    tree_arc_count = []  # list of all ID,HEAD pairs in a tree; it needs to be reset before processing every next tree
+    for w in tree:  # w is a quadriplet dep, head, token, rel
+        try:
+            a = int(round(float(w[0]), 0))
+            b = int(round(float(w[1]), 0))
+            if a > b:
+                tree_arc_count.append([b, a])
+                # print( 'Reversed', '\t', [b,a] )
+            else:
+                tree_arc_count.append([a,b])  # this is a list of all arcs defined as 2-member-lists of start-end elements put in the right order: [[1, 2], [2, 18]]
+                # print( 'Born straight', '\t', [a,b] )
+        except ValueError:
+            print(w[0], w[1])
+    # print >> out,'Lets inspect a random sample from the list of arcs: ', tree_arc_count  # random.sample(self.tree_arc_count, 2))  # self.tree_arc_count[4: 10]
 
+    pairs = []  # produce a list of all pairwise combinations of arcs of type AB AC AD BC BD CD (there is no AA and no ACandCA) from the tree_arc_count list
+
+    pairs_object = itertools.combinations(tree_arc_count, 2)
+    for pair in pairs_object:
+        pairs.append(pair)
+    # print >> out, "Number of arcs combinations in this tree (", tree_wc, " words): ", len(pairs)  # for the test set I expect =COMBIN(86,2) = 3655, but I need combos within a sent only!
+    # print pairs
+
+    tples = 0
+    for tple in pairs:
+        tples += 1
+        # print( tple[1][0], '/t', range(tple[0][0], tple[0][1]) )
+        if tple[1][0] in range(tple[0][0], tple[0][1]) and not tple[1][1] in range(tple[0][0], tple[0][1]) and \
+                        tple[1][0] != tple[0][0] and tple[1][1] != tple[0][1]:  # ([1,6],[2,7])
+            nonprojectivesentence = True
+            in_sent += 1
+            # print('START of 2nd within the 1st arc', tple)
+        if not tple[1][0] in range(tple[0][0], tple[0][1]) and tple[1][1] in range(tple[0][0], tple[0][1]) and \
+                        tple[1][0] != tple[0][0] and tple[1][1] != tple[0][1]:  # ([1,6],[0,3])
+            nonprojectivesentence = True
+            in_sent += 1
+            # print('END of of 2nd within the 1st arc', tple)
+        else:
+            continue
+
+    in_sent /= len(tree)
+
+    return nonprojectivesentence, in_sent
 
 def relation_distribution(tree):
     sent_relations = [w[3] for w in tree]
@@ -92,13 +138,14 @@ def relation_distribution(tree):
 
     # Converting to probability distribution
     # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
-    total = sum(distribution.values())
+    total = sum(distribution.values()) #counts the number of all instances of all dependancies in the sent
+
     for key in distribution:
         try:
             distribution[key] /= total
         except ZeroDivisionError:
             distribution[key] = 0
-    return distribution
+    return distribution # a dict rel : its ratio to all words int the sent
 
 
 def graph_metrics(tree):
@@ -262,13 +309,12 @@ for f in bank:
         metrics['Density'].append(sgraph[5])
         metrics['Diameter'].append(sgraph[6])
         metrics['MHD'].append(sgraph[7])
-        non_proj = nonprojectivity(sentence)
 
+        non_proj = nonprojectivity(sentence)
         metrics['Non-projective sentences'].append(non_proj[0])
-        metrics['Non-projective arcs'].append(non_proj[1])
+        metrics['Non-projectivity'].append(non_proj[1])
 
         rel_distribution = relation_distribution(sentence)
-
         for rel in relations.keys():
             relations[rel].append(rel_distribution[rel])
 
@@ -287,20 +333,20 @@ for f in bank:
     this is needed to avoid printing a new line after each file or printing all files to one line
     '''
 
-    allvalues = []
+    # allvalues = []
+    #
+    # for rel in relations.keys():
+    #     data = np.average(relations[rel])  # pulls out lists of values and averages them for sents in this bank
+    #     allvalues.append(str(data))
+    # # print(metrics)
+    # for metric in metrics:
+    #     data = np.average(metrics[metric])
+    #     allvalues.append(str(data))
+    # print('\t'.join(allvalues))
 
-    for rel in relations.keys():
-        data = np.average(relations[rel])  # pulls out lists of values and averages them for sents in this bank
-        allvalues.append(str(data))
-    # print(metrics)
-    for metric in metrics:
-        data = np.average(metrics[metric])
-        allvalues.append(str(data))
-    print('\t'.join(allvalues))
-
-## Uncomment to get revised stats o
-# folder = len(os.path.abspath(many).split('/')) - 1
-# print('Number of good sentences in ', os.path.abspath(many).split('/')[folder], '\t', good_sents)
-# print('Number of all sentences in ', os.path.abspath(many).split('/')[folder], '\t', all_sents)
-# print('Difference: ', all_sents - good_sents)
-# print('Corpus size after filtering: ', all_good_words)
+# Uncomment to get revised stats o
+folder = len(os.path.abspath(many).split('/')) - 1
+print('Number of good sentences in ', os.path.abspath(many).split('/')[folder], '\t', good_sents)
+print('Number of all sentences in ', os.path.abspath(many).split('/')[folder], '\t', all_sents)
+print('Difference: ', all_sents - good_sents)
+print('Corpus size after filtering: ', all_good_words)
