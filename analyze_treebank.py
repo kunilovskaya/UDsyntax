@@ -1,21 +1,12 @@
 #!/usr/bin/python3
 # this script does not filter sentences that consist of only root and punct
 # and sentences whose parse trees have more than one component
+import sys
 import fileinput
-from itertools import permutations
 from collections import OrderedDict
+from itertools import permutations
 import numpy as np
 from igraph import *
-import matplotlib.pyplot as plt
-
-arpack_options.maxiter = 3000
-
-filtering = True  # Filter out punctuation and short sentences?
-min_length = 3
-
-modes = ['overview', 'perfile', 'persentence']
-
-mode = modes[0]
 
 
 def nonprojectivity(tree):
@@ -67,8 +58,6 @@ def graph_metrics(tree):
         edges = [(word[1], word[0]) for word in tree if word[3] != 'punct']
     else:
         edges = [(word[1], word[0]) for word in tree]
-    # print([w[0] for w in tree])
-    # print(edges)
     sentence_graph.add_edges(edges)
     sentence_graph.vs.find("ROOT")["shape"] = 'diamond'
     sentence_graph.vs.find("ROOT")["size"] = 40
@@ -92,128 +81,135 @@ def graph_metrics(tree):
     diameter = sentence_graph.diameter()
 
     # Uncomment to produce visuals
-    # if 0.9 < av_degree < 0.98 and len(tree) > 4:
-    if True:
-    #print(' '.join([w[2] for w in tree]), file=sys.stderr)
-    #         print(av_degree, file=sys.stderr)
-        gr_layout = sentence_graph.layout_kamada_kawai()
-        plot(communities, layout=gr_layout)
+    # if True:
+    #   gr_layout = sentence_graph.layout_kamada_kawai()
+    #   plot(communities, layout=gr_layout)
     return av_degree, max_degree, len(communities), comm_size, av_path_length, density, diameter
 
 
-if filtering:
-    relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop mark ' \
-                'nmod appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan goeswith ' \
-                'reparandum root dep acl:relcl flat:name nsubj:pass nummod:gov aux:pass flat:foreign ' \
-                'obl:agent nummod:entity'.split()
-else:
-    relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop ' \
-                'mark nmod appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan ' \
-                'goeswith reparandum punct root dep acl:relcl flat:name nsubj:pass nummod:gov aux:pass flat:foreign ' \
-                'obl:agent nummod:entity'.split()
+if __name__ == "__main__":
+    arpack_options.maxiter = 3000
 
-relations = {rel: [] for rel in relations}  # Here will go probabilities of arc labels
+    filtering = True  # Filter out punctuation and short sentences?
+    min_length = 3
 
-# Now let's start analyzing the treebank
+    modes = ['overview', 'perfile', 'persentence']
 
-sentences = []
+    mode = modes[1]
 
-current_sentence = []  # определяем пустой список
-for line in fileinput.input():  # итерируем строки из обрабатываемого файла
-    if line.strip() == '':  # что делать есть строка пустая:
-        if current_sentence:  # и при этом в списке уже что-то записано
-            # то добавляем в другой список sentences содержимое списка current_sentences
-            sentences.append(current_sentence)
-        current_sentence = []  # обнуляем список
+    if filtering:
+        relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop ' \
+                    'mark nmod appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan ' \
+                    'goeswith reparandum root dep acl:relcl flat:name nsubj:pass nummod:gov aux:pass flat:foreign ' \
+                    'obl:agent nummod:entity'.split()
+    else:
+        relations = 'nsubj obj iobj csubj ccomp xcomp obl vocative expl dislocated advcl advmod discourse aux cop ' \
+                    'mark nmod appos nummod acl amod det clf case conj cc fixed flat compound list parataxis orphan ' \
+                    'goeswith reparandum punct root dep acl:relcl flat:name nsubj:pass nummod:gov aux:pass ' \
+                    'flat:foreign obl:agent nummod:entity'.split()
 
-        # if the number of sents can by devided by 1K without a remainder.
-        # В этом случае, т.е. после каждого 1000-ного предложения печатай месседж. Удобно!
-        if len(sentences) % 1000 == 0:
-            print('I have already read %s sentences' % len(sentences), file=sys.stderr)
-        continue
-    if line.strip().startswith('#'):
-        continue
-    res = line.strip().split('\t')
-    (identifier, token, lemma, upos, xpos, feats, head, rel, misc1, misc2) = res
-    if '.' in identifier:  # ignore empty nodes possible in the enhanced representations
-        continue
-    # во всех остальных случаях имеем дело со строкой по отдельному слову
-    current_sentence.append((int(identifier), int(head), token, rel))
+    relations = {rel: [] for rel in relations}  # Here will go probabilities of arc labels
 
-if current_sentence:
-    sentences.append(current_sentence)
+    # Now let's start analyzing the treebank
 
-metrics = OrderedDict([('Non-projective sentences', []),
-                       ('Non-projective arcs', []),
-                       ('Average out-degree', []),
-                       ('Max out-degree', []),
-                       ('Number of communities', []),
-                       ('Average community size', []),
-                       ('Average path length', []),
-                       ('Density', []),
-                       ('Diameter', []),
-                       ])
-if filtering:
-    sentences = [s for s in sentences if len(s) >= min_length]
+    sentences = []
 
-for i in range(len(sentences)):  # why not for sentence in sentences:
-    if i % 1000 == 0:
-        print('I have already analyzed %s sentences' % i, file=sys.stderr)
+    current_sentence = []  # определяем пустой список
+    for line in fileinput.input():  # итерируем строки из обрабатываемого файла
+        if line.strip() == '':  # что делать есть строка пустая:
+            if current_sentence:  # и при этом в списке уже что-то записано
+                # то добавляем в другой список sentences содержимое списка current_sentences
+                sentences.append(current_sentence)
+            current_sentence = []  # обнуляем список
 
-    sentence = sentences[i]
-    # print(' '.join([w[2] for w in sentence]), file=sys.stderr)
-    non_proj = nonprojectivity(sentence)
-    metrics['Non-projective sentences'].append(non_proj[0])
-    metrics['Non-projective arcs'].append(non_proj[1])
+            # if the number of sents can by devided by 1K without a remainder.
+            # В этом случае, т.е. после каждого 1000-ного предложения печатай месседж. Удобно!
+            if len(sentences) % 1000 == 0:
+                print('I have already read %s sentences' % len(sentences), file=sys.stderr)
+            continue
+        if line.strip().startswith('#'):
+            continue
+        res = line.strip().split('\t')
+        (identifier, token, lemma, upos, xpos, feats, head, rel, misc1, misc2) = res
+        if '.' in identifier:  # ignore empty nodes possible in the enhanced representations
+            continue
+        # во всех остальных случаях имеем дело со строкой по отдельному слову
+        current_sentence.append((int(identifier), int(head), token, rel))
 
-    rel_distribution = relation_distribution(sentence)
-    for rel in relations:
-        relations[rel].append(rel_distribution[rel])
+    if current_sentence:
+        sentences.append(current_sentence)
 
-    sgraph = graph_metrics(sentence)
-    metrics['Average out-degree'].append(sgraph[0])
-    metrics['Max out-degree'].append(sgraph[1])
-    metrics['Number of communities'].append(sgraph[2])
-    metrics['Average community size'].append(sgraph[3])
-    metrics['Average path length'].append(sgraph[4])
-    metrics['Density'].append(sgraph[5])
-    metrics['Diameter'].append(sgraph[6])
+    metrics = OrderedDict([('Non-projective sentences', []),
+                           ('Non-projective arcs', []),
+                           ('Average out-degree', []),
+                           ('Max out-degree', []),
+                           ('Number of communities', []),
+                           ('Average community size', []),
+                           ('Average path length', []),
+                           ('Density', []),
+                           ('Diameter', []),
+                           ])
+    if filtering:
+        sentences = [s for s in sentences if len(s) >= min_length]
 
-if mode == 'persentence':
-    print('Sentence\t', '\t'.join(metrics.keys()) + '\t', '\t'.join(sorted(relations.keys())), '\tClass')
-    for sent in range(len(sentences)):
-        print(sent, '\t', end=' ')
+    for i in range(len(sentences)):  # why not for sentence in sentences:
+        if i % 1000 == 0:
+            print('I have already analyzed %s sentences' % i, file=sys.stderr)
+
+        sentence = sentences[i]
+        # print(' '.join([w[2] for w in sentence]), file=sys.stderr)
+        non_proj = nonprojectivity(sentence)
+        metrics['Non-projective sentences'].append(non_proj[0])
+        metrics['Non-projective arcs'].append(non_proj[1])
+
+        rel_distribution = relation_distribution(sentence)
+        for rel in relations:
+            relations[rel].append(rel_distribution[rel])
+
+        sgraph = graph_metrics(sentence)
+        metrics['Average out-degree'].append(sgraph[0])
+        metrics['Max out-degree'].append(sgraph[1])
+        metrics['Number of communities'].append(sgraph[2])
+        metrics['Average community size'].append(sgraph[3])
+        metrics['Average path length'].append(sgraph[4])
+        metrics['Density'].append(sgraph[5])
+        metrics['Diameter'].append(sgraph[6])
+
+    if mode == 'persentence':
+        print('Sentence\t', '\t'.join(metrics.keys()) + '\t', '\t'.join(sorted(relations.keys())), '\tClass')
+        for sent in range(len(sentences)):
+            print(sent, '\t', end=' ')
+            for metric in metrics:
+                print(metrics[metric][sent], end='\t')
+            for rel in sorted(relations.keys()):
+                data = relations[rel][sent]
+                print(data, end='\t')
+
+            class_label = fileinput.filename().split('/')[0]  # the directory
+            print(class_label)
+
+    elif mode == 'perfile':
+        # print('File\t', '\t'.join(metrics.keys())+'\t', '\t'.join(sorted(relations.keys())), '\tClass')
+        print(fileinput.filename() + '\t', end=' ')
         for metric in metrics:
-            print(metrics[metric][sent], end='\t')
+            print(np.average(metrics[metric]), end='\t')
         for rel in sorted(relations.keys()):
-            data = relations[rel][sent]
+            data = np.average(relations[rel])
             print(data, end='\t')
 
         class_label = fileinput.filename().split('/')[0]  # the directory
         print(class_label)
 
-elif mode == 'perfile':
-    # print('File\t', '\t'.join(metrics.keys())+'\t', '\t'.join(sorted(relations.keys())), '\tClass')
-    print(fileinput.filename() + '\t', end=' ')
-    for metric in metrics:
-        print(np.average(metrics[metric]), end='\t')
-    for rel in sorted(relations.keys()):
-        data = np.average(relations[rel])
-        print(data, end='\t')
 
-    class_label = fileinput.filename().split('/')[0]  # the directory
-    print(class_label)
-
-
-elif mode == 'overview':
-    print('Feature\tAverage\tDeviation\tObservations')
-    for metric in metrics:
-        print(metric, '\t', np.average(metrics[metric]), '\t', np.std(metrics[metric]), '\t', len(metrics[metric]))
-        # plot metric histogram if needed
-        # plt.hist(metrics[metric], 50)
-        # plt.grid(True)
-        # plt.title(metric)
-        # plt.show()
-    for rel in sorted(relations.keys()):
-        data = relations[rel]
-        print(rel + '\t', np.average(data), '\t', np.std(data), '\t', len(data))
+    elif mode == 'overview':
+        print('Feature\tAverage\tDeviation\tObservations')
+        for metric in metrics:
+            print(metric, '\t', np.average(metrics[metric]), '\t', np.std(metrics[metric]), '\t', len(metrics[metric]))
+            # plot metric histogram if needed
+            # plt.hist(metrics[metric], 50)
+            # plt.grid(True)
+            # plt.title(metric)
+            # plt.show()
+        for rel in sorted(relations.keys()):
+            data = relations[rel]
+            print(rel + '\t', np.average(data), '\t', np.std(data), '\t', len(data))

@@ -28,7 +28,6 @@ def visual(x, labels, classes):
     if len(classes) == 3:
         colors = ['darkorange', 'navy', 'turquoise']
     lw = 2
-    classes = ['rnc', 'learners', 'prof']
     for color, target_name in zip(colors, classes):
         plt.scatter(x_r[labels == target_name, 0], x_r[labels == target_name, 1], s=10, color=color,
                     label=target_name, alpha=.8, lw=lw)
@@ -146,7 +145,6 @@ if __name__ == "__main__":
     print(confusion_matrix(data["group"], predicted))
 
     visual(scaled_X, groups, classifier.classes_)
-    exit()
 
     print('=====')
     print('Here goes cross-validation. Please wait a bit...')
