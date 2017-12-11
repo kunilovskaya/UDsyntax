@@ -4,8 +4,8 @@ from scipy import stats
 import pandas as pd
 from os.path import basename
 
-# *.stats.txt files
-treebank_stats0 = sys.argv[1]
+# *.stats.tsv files
+treebank_stats0 = sys.argv[1] #
 treebank_stats1 = sys.argv[2]
 
 data0 = pd.read_csv(treebank_stats0, sep='\t')  # reads into a DataFrame: rows of index and values
