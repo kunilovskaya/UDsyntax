@@ -1,1 +1,0 @@
-/home/masha/aaa/oslo/data_scripts/row_analyses.py

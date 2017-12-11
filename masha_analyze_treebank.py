@@ -1,1 +1,0 @@
-/home/masha/aaa/oslo/data_scripts/masha_analyze_treebank.py
