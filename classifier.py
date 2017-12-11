@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# usage ./classifier.py 0 10
 
 import sys
 import pandas as pd
@@ -16,9 +17,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
-datafile = 'm_bigtable.tsv.gz'  # The path to the Big Table file
+datafile = 'new_m_bigtable.tsv.gz'  # The path to the Big Table file
 
-train = pd.read_csv(datafile, header=0, delimiter="\t")
+train = pd.read_csv(datafile, header=0, delimiter="\t") # reads into a DataFrame: rows of index and values
 
 # State the classification mode in the first argument!
 modes = ['3class', 'natVStran', 'natVSlearn', 'natVSprof', 'profVSlearn']
@@ -50,10 +51,12 @@ elif mode == 'natVStran':
 
 group = train['group']
 
-X = train[train.keys()[2:]]
+X = train[train.keys()[2:]] # vectors of values for each row starting from acl
+
 
 # Feature selection
-ff = SelectKBest(k=features).fit(X, group)
+ff = SelectKBest(k=features).fit(X, group) # here is where the user-specified number od features is taken into account
+
 X = SelectKBest(k=features).fit_transform(X, group)
 top_ranked_features = sorted(enumerate(ff.scores_), key=lambda x: x[1], reverse=True)[:features]
 top_ranked_features_indices = [x[0] for x in top_ranked_features]
@@ -131,13 +134,13 @@ else:
 pca = PCA(n_components=2)
 X_r = pca.fit(scaled_X).transform(scaled_X)
 plt.figure()
-colors = ['darkorange', 'navy']
-if len(classifier.classes_) == 3:
-    colors = ['navy', 'turquoise', 'darkorange']
+colors = {'learners':'navy', 'prof':'turquoise', 'rnc':'darkorange'}
+# colors = ['darkorange', 'navy']
+# if len(classifier.classes_) == 3:
+#     colors = ['navy', 'turquoise', 'darkorange']
 lw = 2
-for color, target_name in zip(colors, classifier.classes_):
-    plt.scatter(X_r[group == target_name, 0], X_r[group == target_name, 1], s=5, color=color,
-                label=target_name, alpha=.8, lw=lw)
+for target_name in classifier.classes_:
+    plt.scatter(X_r[group == target_name, 0], X_r[group == target_name, 1], s=5, color=colors[target_name], label=target_name, alpha=.8, lw=lw)
 plt.legend(loc='best', scatterpoints=1)
 plt.show()
 plt.close()

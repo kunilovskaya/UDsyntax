@@ -125,7 +125,7 @@ if __name__=="__main__":
     if args.stats:
         stats.print_basic_stats(out)
 
-    print('non-projective deps: ', count)
+    print('non-projectivity: ', count) #number of intersections of arcs in the sent
     print('Ratio of non-projective dependencies : ', count / stats.word_count * 100)
     print('non-projective sentences: ', nonpr_sents)
     #print('In %d sentences there are more than 1 non-projective dependencies (annotation errors?)'%(errors))
