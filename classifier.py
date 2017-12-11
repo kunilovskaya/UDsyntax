@@ -133,12 +133,15 @@ X_r = pca.fit(scaled_X).transform(scaled_X)
 plt.figure()
 colors = ['darkorange', 'navy']
 if len(classifier.classes_) == 3:
-    colors = ['navy', 'turquoise', 'darkorange']
+    colors = [ 'darkorange', 'navy', 'turquoise',]
+    classifier.classes_ = ['rnc', 'learners', 'prof']
 lw = 2
 for color, target_name in zip(colors, classifier.classes_):
-    plt.scatter(X_r[group == target_name, 0], X_r[group == target_name, 1], s=5, color=color,
+    plt.scatter(X_r[group == target_name, 0], X_r[group == target_name, 1], s=10, color=color,
                 label=target_name, alpha=.8, lw=lw)
-plt.legend(loc='best', scatterpoints=1)
+plt.legend(loc='best', scatterpoints=1, prop={'size': 30})
+plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
 plt.show()
 plt.close()
 # Plotting finished.

@@ -26,12 +26,15 @@ def visual(x, labels, classes):
     plt.figure()
     colors = ['darkorange', 'navy']
     if len(classes) == 3:
-        colors = ['navy', 'turquoise', 'darkorange']
+        colors = ['darkorange', 'navy', 'turquoise']
     lw = 2
+    classes = ['rnc', 'learners', 'prof']
     for color, target_name in zip(colors, classes):
-        plt.scatter(x_r[labels == target_name, 0], x_r[labels == target_name, 1], s=5, color=color,
+        plt.scatter(x_r[labels == target_name, 0], x_r[labels == target_name, 1], s=10, color=color,
                     label=target_name, alpha=.8, lw=lw)
-    plt.legend(loc='best', scatterpoints=1)
+    plt.legend(loc='best', scatterpoints=1, prop={'size': 30})
+    plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
+    plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
     plt.show()
     plt.close()
     # Plotting finished.
@@ -142,6 +145,9 @@ if __name__ == "__main__":
     print('Confusion matrix on the training set:')
     print(confusion_matrix(data["group"], predicted))
 
+    visual(scaled_X, groups, classifier.classes_)
+    exit()
+
     print('=====')
     print('Here goes cross-validation. Please wait a bit...')
 
@@ -165,4 +171,4 @@ if __name__ == "__main__":
         print("F1 values on 10-fold cross-validation:")
         print(cv_scores['test_f1_macro'])
 
-    visual(scaled_X, groups, classifier.classes_)
+    
