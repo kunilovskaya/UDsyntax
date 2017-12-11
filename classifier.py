@@ -20,15 +20,22 @@ def visual(data, classes):
     pca = PCA(n_components=2)
     x_r = pca.fit_transform(data)
     plt.figure()
-    colors = ['darkorange', 'navy']
-    if len(classes) == 3:
-        colors = ['darkorange', 'navy', 'turquoise', ]
-        # classes = ['rnc', 'learners', 'prof']
+    # consistent colors
+    colors = {'learners': 'navy', 'prof': 'turquoise', 'rnc': 'darkorange', 'transl': 'blue', }
     lw = 2
-    for color, target_name in zip(colors, classes):
-        plt.scatter(x_r[group == target_name, 0], x_r[group == target_name, 1], s=10, color=color,
+    for target_name in classifier.classes_:
+        plt.scatter(X_r[group == target_name, 0], X_r[group == target_name, 1], s=5, color=colors[target_name],
                     label=target_name, alpha=.8, lw=lw)
-    plt.legend(loc='best', scatterpoints=1, prop={'size': 30})
+
+    # colors = ['darkorange', 'navy']
+    # if len(classes) == 3:
+    #     colors = ['darkorange', 'navy', 'turquoise', ]
+    #     # classes = ['rnc', 'learners', 'prof']
+    # lw = 2
+    # for color, target_name in zip(colors, classes):
+    #     plt.scatter(x_r[group == target_name, 0], x_r[group == target_name, 1], s=10, color=color,
+    #                 label=target_name, alpha=.8, lw=lw)
+    plt.legend(loc='upper right', scatterpoints=1, prop={'size': 15})
     plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
     plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
     plt.show()
