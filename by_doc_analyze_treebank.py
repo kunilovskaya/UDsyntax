@@ -18,12 +18,11 @@ there is no workaround the unordered nature of dicts, which gets me in trouble w
 '''
 if filtering:
     relations = OrderedDict([('acl', []), ('acl:relcl', []), ('advcl', []), ('advmod', []), ('amod', []), ('appos', []),
-                             ('aux', []), ('aux:pass', []), ('case', []), ('cc', []), ('ccomp', []), ('compound', []),
-                             ('conj', []), ('cop', []), ('dep', []), ('discourse', []), ('fixed', []), ('flat', []),
-                             ('flat:foreign', []), ('flat:name', []), ('iobj', []), ('mark', []), ('nmod', []),
-                             ('nsubj', []), ('nsubj:pass', []), ('nummod', []), ('nummod:entity', []), ('nummod:gov', []),
-                             ('obj', []), ('obl', []), ('obl:agent', []), ('orphan', []), ('parataxis', []),
-                            ('xcomp', []), ])
+                         ('aux', []), ('aux:pass', []), ('case', []), ('cc', []), ('ccomp', []), ('compound', []),
+                         ('conj', []), ('cop', []), ('csubj', []), ('csubj:pass', []), ('det', []), ('discourse', []), ('fixed', []), ('flat', []),
+                         ('flat:foreign', []), ('flat:name', []), ('iobj', []), ('mark', []), ('nmod', []),
+                         ('nsubj', []), ('nsubj:pass', []), ('nummod', []), ('nummod:gov', []),
+                         ('obj', []), ('obl', []), ('orphan', []), ('parataxis', []), ('xcomp', []), ])
 else:
     relations = OrderedDict([('acl', []), ('acl:relcl', []), ('advcl', []), ('advmod', []), ('amod', []),
                              ('appos', []), ('aux', []), ('aux:pass', []), ('case', []), ('cc', []), ('ccomp', []),
@@ -98,9 +97,10 @@ def nonprojectivity(tree):
                 # print( 'Reversed', '\t', [b,a] )
             else:
                 tree_arc_count.append([a,b])  # this is a list of all arcs defined as 2-member-lists of start-end elements put in the right order: [[1, 2], [2, 18]]
-                # print( 'Born straight', '\t', [a,b] )
+        #         print( 'Born straight', '\t', [a,b] )
         except ValueError:
-            print(w[0], w[1])
+            continue
+            # print(w[0], w[1])
     # print >> out,'Lets inspect a random sample from the list of arcs: ', tree_arc_count  # random.sample(self.tree_arc_count, 2))  # self.tree_arc_count[4: 10]
 
     pairs = []  # produce a list of all pairwise combinations of arcs of type AB AC AD BC BD CD (there is no AA and no ACandCA) from the tree_arc_count list
@@ -249,9 +249,10 @@ def calculate_mdd(tree):
 
 # Now let's start analyzing the treebank as a set of documents
 bank = [f for f in os.listdir(many) if f.endswith('.conllu')]  # and f.startswith('511329')]  # that's how to limit the input data to just offensive files
-all_sents = 0  # or get them from supplied conllu-stats.py which works for onebig and for multiple input
-good_sents = 0
-all_good_words = 0
+# all_sents = 0  # or get them from supplied conllu-stats.py which works for onebig and for multiple input
+# good_sents = 0
+# all_good_words = 0
+
 for f in bank:
     #collect sentence-based counts
     words = open(many + f, 'r').readlines()
@@ -279,7 +280,7 @@ for f in bank:
 
     if current_sentence:
         sentences.append(current_sentence)
-    all_sents += len(sentences)
+    # all_sents += len(sentences)
 
 
     if filtering:
@@ -290,6 +291,8 @@ for f in bank:
         del value[:]
     for value in metrics.values():
         del value[:]
+    # sent_lengths=[] #list of sentence lengths for this doc/corpus
+
     for i in range(len(sentences)):  # why not for sentence in sentences:
         # if i % 1000 == 0:
         #     print('I have already analyzed %s sentences' % i, file=sys.stderr)
@@ -300,7 +303,8 @@ for f in bank:
             # print('YEs!')
             continue
         # count for actual corpus size in tokens after filtering, commented and blank lines are already excluded
-        all_good_words += len(sentence)
+        # all_good_words += len(sentence)
+        # sent_lengths.append(len(sentence))
         metrics['Average out-degree'].append(sgraph[0])
         metrics['Max out-degree'].append(sgraph[1])
         metrics['Number of communities'].append(sgraph[2])
@@ -317,36 +321,38 @@ for f in bank:
         rel_distribution = relation_distribution(sentence)
         for rel in relations.keys():
             relations[rel].append(rel_distribution[rel])
-
+            # print(numrel, '\t', tokens)
         compre_diff = calculate_mdd(sentence)
         metrics['MDD'].append(compre_diff)
 
     '''
     count for all actually used sentences
     '''
-    good_sents += len(metrics['MDD'])
+    # good_sents += len(metrics['MDD'])
 
     doc = os.path.splitext(os.path.basename(many+f))[0]#without extention
     cl = os.path.abspath(many).split('/')[folder]
     print(doc, cl, sep='\t', end='\t')
+    # produce lists of average sent-Lengths for each doc to test significance of differences
+    # print(doc, cl, np.mean(sent_lengths), len(metrics['MDD']), sum(sent_lengths), sep='\t', end='\n')
     '''
     this is needed to avoid printing a new line after each file or printing all files to one line
     '''
 
-    # allvalues = []
-    #
-    # for rel in relations.keys():
-    #     data = np.average(relations[rel])  # pulls out lists of values and averages them for sents in this bank
-    #     allvalues.append(str(data))
-    # # print(metrics)
-    # for metric in metrics:
-    #     data = np.average(metrics[metric])
-    #     allvalues.append(str(data))
-    # print('\t'.join(allvalues))
+    allvalues = []
+
+    for rel in relations.keys():
+        data = np.average(relations[rel])  # pulls out lists of values and averages them for sents in this bank
+        allvalues.append(str(data))
+    # print(metrics)
+    for metric in metrics:
+        data = np.average(metrics[metric])
+        allvalues.append(str(data))
+    print('\t'.join(allvalues))
 
 # Uncomment to get revised stats o
-folder = len(os.path.abspath(many).split('/')) - 1
-print('Number of good sentences in ', os.path.abspath(many).split('/')[folder], '\t', good_sents)
-print('Number of all sentences in ', os.path.abspath(many).split('/')[folder], '\t', all_sents)
-print('Difference: ', all_sents - good_sents)
-print('Corpus size after filtering: ', all_good_words)
+# folder = len(os.path.abspath(many).split('/')) - 1
+# print('Number of good sentences in ', os.path.abspath(many).split('/')[folder], '\t', good_sents)
+# print('Number of all sentences in ', os.path.abspath(many).split('/')[folder], '\t', all_sents)
+# print('Difference: ', all_sents - good_sents)
+# print('Corpus size after filtering: ', all_good_words)
