@@ -29,17 +29,17 @@ def selectmode(x, umode):
     if umode == 'natVSlearn':
         exclusion = ['prof', 'en_learners', 'en_prof']
     elif umode == 'natVSprof':
-        exclusion = ['learners', 'en_learners', 'en_prof']
+        exclusion = ['learner', 'en_learners', 'en_prof']
     elif umode == 'profVSlearn':
         exclusion = ['rnc', 'en_learners', 'en_prof']
     elif umode == 'enprofVSenlearn':
-        exclusion = ['rnc', 'learners', 'prof']
+        exclusion = ['rnc', 'learner', 'prof']
     elif umode == '3class':
         exclusion = ['en_learners', 'en_prof']
     elif umode == 'natVStran':
         exclusion = ['en_learners', 'en_prof']
         newdata.loc[newdata.group == 'prof', 'group'] = 'transl'
-        newdata.loc[newdata.group == 'learners', 'group'] = 'transl'
+        newdata.loc[newdata.group == 'learner', 'group'] = 'transl'
     newdata = newdata[~newdata.group.isin(exclusion)]
     return newdata
 
@@ -170,4 +170,4 @@ if __name__ == "__main__":
         print("F1 values on 10-fold cross-validation:", file=sys.stderr)
         print(cv_scores['test_f1_macro'], file=sys.stderr)
 
-    visual(scaled_X, groups, classifier.classes_)
+    # visual(scaled_X, groups, classifier.classes_)
