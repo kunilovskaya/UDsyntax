@@ -60,7 +60,7 @@ if __name__ == "__main__":
     print('Train data:')
     print('Instances:', train_data_features.shape[0])
     print('Features:', train_data_features.shape[1])
-    print('We use these best features (ranked by their importance):', [vocabulary[x] for x in top_feat])
+    print('We use these best features (ranked by their importance):', [vocabulary[x] for x in top_feat][:100], '...')
 
     # Optionally scaling the features
     scaled_X = preprocessing.scale(train_data_features)
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     print('Confusion matrix on the training set:')
     print(confusion_matrix(data["group"], predicted))
 
-    visual(scaled_X, groups, classifier.classes_)
+    # visual(scaled_X, groups, classifier.classes_)
 
     print('=====')
     print('Here goes cross-validation. Please wait a bit...')
