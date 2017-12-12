@@ -5,7 +5,7 @@ import pandas as pd
 from os.path import basename
 
 # *.stats.tsv files
-treebank_stats0 = sys.argv[1] #
+treebank_stats0 = sys.argv[1]
 treebank_stats1 = sys.argv[2]
 
 data0 = pd.read_csv(treebank_stats0, sep='\t')  # reads into a DataFrame: rows of index and values
@@ -15,7 +15,8 @@ print('Feature\t%s\t%s\tt-value\tp-value' % (basename(treebank_stats0), basename
 # .iterrows(): Iterate over DataFrame rows as (index, Series) pairs;
 # zip iterates over rows of two dataframes in parallel?
 for row0, row1 in zip(data0.iterrows(), data1.iterrows()):
-    # get the content of the first cell in column (Feature, etc) from the first DataFrame (data0); row0[1] ignores the tech info for each row in a DataFrame
+    # get the content of the first cell in column (Feature, etc) from the first DataFrame (data0)
+    # row0[1] ignores the tech info for each row in a DataFrame
     feature = row0[1]['Feature']
     average0 = row0[1]['Average']
     average1 = row1[1]['Average']
