@@ -32,15 +32,16 @@ def nonprojectivity(tree):
     return nonprojectivesentence, nonprojective_ratio
 
 
-def relation_distribution(tree):
+def relation_distribution(tree, i_relations):
     sent_relations = [w[3] for w in tree]
-    distribution = {rel: sent_relations.count(rel) for rel in relations}
+    distribution = {rel: sent_relations.count(rel) for rel in i_relations}
 
     # Converting to probability distribution
     # 'probabilities' are basically ratio of the rel in question to all rels in the sentence
     total = sum(distribution.values())
-    for key in distribution:
-        distribution[key] /= total
+    if total:  # Only if there are any interesting relations in the sentence
+        for key in distribution:
+            distribution[key] /= total
     return distribution
 
 
@@ -223,7 +224,7 @@ if __name__ == "__main__":
         metrics['Non-projective sentences'].append(non_proj[0])
         metrics['Non-projective arcs'].append(non_proj[1])
 
-        rel_distribution = relation_distribution(sentence)
+        rel_distribution = relation_distribution(sentence, relations)
         for rel in relations.keys():
             relations[rel].append(rel_distribution[rel])
         compre_diff = calculate_mdd(sentence)
