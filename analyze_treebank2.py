@@ -120,6 +120,8 @@ def calculate_mdd(tree):
         for s_word_id in range(len(s)):  # use s-index to refer to words
             w = s[s_word_id]
             head_id = w[1]
+            if head_id == 0:
+                continue
             s_head_id = None
             for s_word_id_2 in range(len(s)):  # use s-index to refer to heads
                 w1 = s[s_word_id_2]
