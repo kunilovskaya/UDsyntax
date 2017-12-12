@@ -23,8 +23,8 @@ def visual(data, classes):
     # consistent colors
     colors = {'learners': 'navy', 'prof': 'turquoise', 'rnc': 'darkorange', 'transl': 'blue', }
     lw = 2
-    for target_name in classifier.classes_:
-        plt.scatter(X_r[group == target_name, 0], X_r[group == target_name, 1], s=5, color=colors[target_name],
+    for target_name in classes:
+        plt.scatter(x_r[group == target_name, 0], x_r[group == target_name, 1], s=5, color=colors[target_name],
                     label=target_name, alpha=.8, lw=lw)
 
     # colors = ['darkorange', 'navy']
@@ -47,7 +47,10 @@ def visual(data, classes):
 if __name__ == "__main__":
     datafile = sys.argv[1]  # The path to the Big Table file
 
-    train = pd.read_csv(datafile, header=0, delimiter="\t")
+    if datafile.endswith('.gz'):
+        train = pd.read_csv(datafile, compression='gzip', header=0, delimiter="\t")
+    else:
+        train = pd.read_csv(datafile, header=0, delimiter="\t")
 
     # State the classification mode in the first argument!
     modes = ['3class', 'natVStran', 'natVSlearn', 'natVSprof', 'profVSlearn']
