@@ -7,34 +7,63 @@ import pandas as pd
 from sklearn import preprocessing
 from sklearn import svm
 from sklearn.decomposition import PCA
-from sklearn.feature_selection import SelectKBest
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import cross_validate
 from sklearn.pipeline import make_pipeline
+from sklearn.feature_selection import SelectKBest
 
 
-def visual(data, classes):
+def selectmode(x, umode):
+    # State the classification mode in the first argument!
+    modes = ['3class', 'natVStran', 'natVSlearn', 'natVSprof', 'profVSlearn', 'enprofVSenlearn']
+    try:
+        umode = modes[umode]
+    except IndexError:
+        print('Incorrect mode!', file=sys.stderr)
+        exit()
+    # Dataset preparation, depending on the chosen mode
+    newdata = x
+    exclusion = []
+    if umode == 'natVSlearn':
+        exclusion = ['prof', 'en_learners', 'en_prof']
+    elif umode == 'natVSprof':
+        exclusion = ['learners', 'en_learners', 'en_prof']
+    elif umode == 'profVSlearn':
+        exclusion = ['rnc', 'en_learners', 'en_prof']
+    elif umode == 'enprofVSenlearn':
+        exclusion = ['rnc', 'learners', 'prof']
+    elif umode == '3class':
+        exclusion = ['en_learners', 'en_prof']
+    elif umode == 'natVStran':
+        exclusion = ['en_learners', 'en_prof']
+        newdata.loc[newdata.group == 'prof', 'group'] = 'transl'
+        newdata.loc[newdata.group == 'learners', 'group'] = 'transl'
+    newdata = newdata[~newdata.group.isin(exclusion)]
+    return newdata
+
+
+def featureselection(x, labels, n_features):
+    # Feature selection
+    ff = SelectKBest(k=n_features).fit(x, labels)
+    newdata = SelectKBest(k=n_features).fit_transform(x, labels)
+    top_ranked_features = sorted(enumerate(ff.scores_), key=lambda y: y[1], reverse=True)[:n_features]
+    top_ranked_features_indices = [x[0] for x in top_ranked_features]
+    return newdata, top_ranked_features_indices
+
+
+def visual(data, labels, classes):
     # Here goes the 2-D plotting of the data...
     pca = PCA(n_components=2)
     x_r = pca.fit_transform(data)
     plt.figure()
     # consistent colors
-    colors = {'learners': 'navy', 'prof': 'turquoise', 'rnc': 'darkorange', 'transl': 'blue', }
+    colors = {'learner': 'navy', 'prof': 'turquoise', 'rnc': 'darkorange', 'transl': 'blue', }
     lw = 2
     for target_name in classes:
-        plt.scatter(x_r[group == target_name, 0], x_r[group == target_name, 1], s=5, color=colors[target_name],
+        plt.scatter(x_r[labels == target_name, 0], x_r[labels == target_name, 1], s=5, color=colors[target_name],
                     label=target_name, alpha=.8, lw=lw)
-
-    # colors = ['darkorange', 'navy']
-    # if len(classes) == 3:
-    #     colors = ['darkorange', 'navy', 'turquoise', ]
-    #     # classes = ['rnc', 'learners', 'prof']
-    # lw = 2
-    # for color, target_name in zip(colors, classes):
-    #     plt.scatter(x_r[group == target_name, 0], x_r[group == target_name, 1], s=10, color=color,
-    #                 label=target_name, alpha=.8, lw=lw)
     plt.legend(loc='upper right', scatterpoints=1, prop={'size': 15})
     plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
     plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
@@ -53,43 +82,26 @@ if __name__ == "__main__":
         train = pd.read_csv(datafile, header=0, delimiter="\t")
 
     # State the classification mode in the first argument!
-    modes = ['3class', 'natVStran', 'natVSlearn', 'natVSprof', 'profVSlearn']
-
     mode = int(sys.argv[2])
-    try:
-        mode = modes[mode]
-    except IndexError:
-        print('Incorrect mode!', file=sys.stderr)
-        exit()
 
-    # State how many best features you want to use in the 2nd argument! (max=46)
-    features = int(sys.argv[3])
+    features = None
+    # Optionally state how many best features you want to use in the 2nd argument.
+    if len(sys.argv) > 3:
+        features = int(sys.argv[3])
 
-    if features < 1 or features > len(train.columns) - 2:
-        print('Incorrect number of features!', file=sys.stderr)
-        exit()
+    train = selectmode(train, mode)
 
-    # Dataset preparation, depending on the chosen mode
-    if mode == 'natVSlearn':
-        train = train[train.group != 'prof']
-    elif mode == 'natVSprof':
-        train = train[train.group != 'learners']
-    elif mode == 'profVSlearn':
-        train = train[train.group != 'rnc']
-    elif mode == 'natVStran':
-        train.loc[train.group == 'prof', 'group'] = 'transl'
-        train.loc[train.group == 'learners', 'group'] = 'transl'
+    groups = train['group']
 
-    group = train['group']
+    training_set = train.drop(columns=['doc', 'group'])
 
-    X = train[train.keys()[2:]]
-
-    # Feature selection
-    ff = SelectKBest(k=features).fit(X, group)
-    X = SelectKBest(k=features).fit_transform(X, group)
-    top_ranked_features = sorted(enumerate(ff.scores_), key=lambda x: x[1], reverse=True)[:features]
-    top_ranked_features_indices = [x[0] for x in top_ranked_features]
-    used_features = [train.keys()[x + 2] for x in top_ranked_features_indices]
+    if features:
+        if features < 1 or features > len(training_set.columns):
+            print('Incorrect number of features!', file=sys.stderr)
+            exit()
+        X, top_feat = featureselection(training_set, groups, features)
+    else:
+        X, top_feat = featureselection(training_set, groups, len(training_set.columns))
 
     # Optionally print dataset characteristics:
     print(datafile, file=sys.stderr)
@@ -97,7 +109,7 @@ if __name__ == "__main__":
     print('Train data:', file=sys.stderr)
     print('Instances:', X.shape[0], file=sys.stderr)
     print('Features:', X.shape[1], file=sys.stderr)
-    print('We use these best features (ranked by their importance):', used_features, file=sys.stderr)
+    print('We use these best features (ranked by their importance):', [training_set.keys()[x] for x in top_feat], file=sys.stderr)
 
     # Optionally scaling the features
     scaled_X = preprocessing.scale(X)
@@ -125,15 +137,15 @@ if __name__ == "__main__":
 
     print("The data is ready! Let's train some models...", file=sys.stderr)
     clf = make_pipeline(preprocessing.StandardScaler(), algo)
-    classifier = algo.fit(scaled_X, group)
+    classifier = algo.fit(scaled_X, groups)
     predicted = classifier.predict(scaled_X)
 
-    print("Accuracy on the training set:", round(accuracy_score(train["group"], predicted), 3), file=sys.stderr)
+    print("Accuracy on the training set:", round(accuracy_score(groups, predicted), 3), file=sys.stderr)
 
-    print(classification_report(train["group"], predicted), file=sys.stderr)
+    print(classification_report(groups, predicted), file=sys.stderr)
 
     print('Confusion matrix on the training set:', file=sys.stderr)
-    print(confusion_matrix(train["group"], predicted), file=sys.stderr)
+    print(confusion_matrix(groups, predicted), file=sys.stderr)
 
     print('=====', file=sys.stderr)
     print('Here goes cross-validation. Please wait a bit...', file=sys.stderr)
@@ -141,7 +153,7 @@ if __name__ == "__main__":
     averaging = True  # Do you want to average the cross-validate metrics?
 
     scoring = ['precision_macro', 'recall_macro', 'f1_macro']
-    cv_scores = cross_validate(clf, X, group, cv=10, scoring=scoring, n_jobs=2)
+    cv_scores = cross_validate(clf, X, groups, cv=10, scoring=scoring, n_jobs=2)
 
     if averaging:
         print("Average Precision on 10-fold cross-validation: %0.3f (+/- %0.3f)" % (
@@ -158,4 +170,4 @@ if __name__ == "__main__":
         print("F1 values on 10-fold cross-validation:", file=sys.stderr)
         print(cv_scores['test_f1_macro'], file=sys.stderr)
 
-    visual(scaled_X, classifier.classes_)
+    visual(scaled_X, groups, classifier.classes_)
