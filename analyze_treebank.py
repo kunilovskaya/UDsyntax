@@ -175,6 +175,7 @@ if __name__ == "__main__":
         metrics['Density'].append(sgraph[5])
         metrics['Diameter'].append(sgraph[6])
 
+    # Весь вывод происходит на stdout
     if mode == 'persentence':
         print('Sentence\t', '\t'.join(metrics.keys()) + '\t', '\t'.join(sorted(relations.keys())), '\tClass')
         for sent in range(len(sentences)):
