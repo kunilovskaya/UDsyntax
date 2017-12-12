@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 #
 
-import sys
 import fileinput
 from collections import OrderedDict
 from itertools import permutations
@@ -53,15 +52,13 @@ def graph_metrics(tree):
         n_tokens = len(tree) + 1
     sentence_graph = sentence_graph.as_directed()
     sentence_graph.vs["name"] = ['ROOT'] + [word[2] for word in tree]  # string of vertices' attributes called name
-    sentence_graph.vs["label"] = sentence_graph.vs[
-        "name"]  # the name attribute is renamed label, because in drawing vertex
-    # labels are taken from the label attribute by default
+    # the name attribute is renamed label,
+    # because in drawing vertex labels are taken from the label attribute by default
+    sentence_graph.vs["label"] = sentence_graph.vs["name"]
     if filtering:
         edges = [(word[1], word[0]) for word in tree if word[3] != 'punct']  # (int(identifier), int(head), token, rel)
     else:
         edges = [(word[1], word[0]) for word in tree]
-    # print([w[0] for w in tree])
-    # print(edges)
     sentence_graph.add_edges(edges)
     sentence_graph.vs.find("ROOT")["shape"] = 'diamond'
     sentence_graph.vs.find("ROOT")["size"] = 40
@@ -76,30 +73,17 @@ def graph_metrics(tree):
                 traveling from the root to all nodes along the dependency edges (Jing, Liu 2015 : 164)
             '''
     parts = sentence_graph.components(mode=WEAK)
-    # print(len(parts))
-    # print(type(parts))
+    mhd = None
     if len(parts) == 1:
         nodes = [word[2] for word in tree if word[3] != 'punct' and word[3] != 'root']
         all_hds = []  # or a counter = 0?
         for node in nodes:
             hd = sentence_graph.shortest_paths_dijkstra('ROOT', node, mode=ALL)
-            # print(node, hd[0][0])
-            # print(type(hd[0][0]))# why the result is a two-level nested list?
             all_hds.append(hd[0][0])
         if all_hds:
             # this is a generic test for 'is everything ok?' which here takes the form of testing
-            # whther the list is empty
+            # whether the list is empty
             mhd = np.average(all_hds)
-            # print(mhd)
-
-        else:
-            mhd = None
-    else:
-        mhd = None
-        # print('!!!')
-        # print(tree)
-        # gr_layout = sentence_graph.layout_kamada_kawai()
-        # plot(sentence_graph, layout=gr_layout)
 
     try:
         communities = sentence_graph.community_leading_eigenvector()
@@ -122,36 +106,32 @@ def graph_metrics(tree):
     # plot(communities, layout=gr_layout)
     return av_degree, max_degree, len(communities), comm_size, av_path_length, density, diameter, mhd
 
+
 def calculate_mdd(tree):
     """
      calculate comprehension difficulty=mean dependency distance(MDD) as “the distance between words and their parents,
      measured in terms of intervening words.” (Hudson 1995 : 16)
     """
+
     s = [q for q in tree if q[3] != 'punct']
     # that's an elegant way to create a new list of sentence quadriplets! without repeating any code
     inbtw = []
-    for head_ind in range(len(s)):  # use s-index to refer to heads
-        w = s[head_ind]
-        if w[3] == 'root':  # we don't want -2 for each row containing root
-            continue
-        head_id = w[1]
-
-        for dep_ind in range(len(s)):  # use s-index to refer to dependants
-            w1 = s[dep_ind]
-            if head_id == w1[0]:
-                break
-        dd = abs(head_ind - dep_ind) - 1
-        # print(w[2], w1[2], dd, '\n')
-        inbtw.append(abs(dd))
-
-    # print(' '.join([w[2] for w in s]))
-    #  why does this print an arbitrary num of sents and then the values for them (because it had file=sys.stderr!)
-    # print(s)
-    # print(len(inbtw))
-    mdd = np.average(
-        inbtw)
+    if len(s) > 1:
+        for s_word_id in range(len(s)):  # use s-index to refer to words
+            w = s[s_word_id]
+            head_id = w[1]
+            s_head_id = None
+            for s_word_id_2 in range(len(s)):  # use s-index to refer to heads
+                w1 = s[s_word_id_2]
+                if head_id == w1[0]:
+                    s_head_id = s_word_id_2
+                    break
+            dd = abs(s_word_id - s_head_id) - 1
+            inbtw.append(dd)
     # use this function instead of overt division of list sum by list length: if smth is wrong you'll get a warning!
-    return mdd  # a list of mdd for each sentence
+    mdd = np.average(inbtw)
+    return mdd  # average MDD for the sentence
+
 
 if __name__ == "__main__":
     arpack_options.maxiter = 3000
@@ -187,7 +167,7 @@ if __name__ == "__main__":
                 sentences.append(current_sentence)
             current_sentence = []  # обнуляем список
 
-            # if the number of sents can by devided by 1K without a remainder.
+            # if the number of sents can by divided by 1K without a remainder.
             # В этом случае, т.е. после каждого 1000-ного предложения печатай месседж. Удобно!
             if len(sentences) % 1000 == 0:
                 print('I have already read %s sentences' % len(sentences), file=sys.stderr)
@@ -271,7 +251,6 @@ if __name__ == "__main__":
 
         class_label = fileinput.filename().split('/')[0]  # the directory
         print(class_label)
-
 
     elif mode == 'overview':
         print('Feature\tAverage\tDeviation\tObservations')
