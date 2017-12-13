@@ -244,7 +244,7 @@ if __name__ == "__main__":
             print(class_label)
 
     elif mode == 'perfile':
-        # print('File\t', '\t'.join(metrics.keys())+'\t', '\t'.join(sorted(relations.keys())), '\tgroup')
+        # print('doc\t', '\t'.join(metrics.keys())+'\t', '\t'.join(sorted(relations.keys())), '\tgroup')
         print(fileinput.filename().split('/')[1].split('.')[0] + '\t', end=' ')
         for metric in metrics:
             print(np.average(metrics[metric]), end='\t')
