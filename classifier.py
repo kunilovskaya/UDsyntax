@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import sys
-
+import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn import preprocessing
@@ -61,12 +61,15 @@ def visual(data, labels, classes):
     # consistent colors
     colors = {'learner': 'navy', 'prof': 'turquoise', 'rnc': 'darkorange', 'transl': 'blue', }
     lw = 2
+    if 'transl' not in classes:
+        classes = reversed(classes)
     for target_name in classes:
-        plt.scatter(x_r[labels == target_name, 0], x_r[labels == target_name, 1], s=5, color=colors[target_name],
+        plt.scatter(x_r[labels == target_name, 0], x_r[labels == target_name, 1], s=1, color=colors[target_name],
                     label=target_name, alpha=.8, lw=lw)
-    plt.legend(loc='upper right', scatterpoints=1, prop={'size': 15})
+    plt.legend(loc='best', scatterpoints=1, prop={'size': 15})
     plt.tick_params(axis='x', which='both', bottom='off', top='off', labelbottom='off')
     plt.tick_params(axis='y', which='both', left='off', right='off', labelleft='off')
+    #plt.savefig('plot.png', dpi=300)
     plt.show()
     plt.close()
     return x_r
@@ -109,7 +112,8 @@ if __name__ == "__main__":
     print('Train data:', file=sys.stderr)
     print('Instances:', X.shape[0], file=sys.stderr)
     print('Features:', X.shape[1], file=sys.stderr)
-    print('We use these best features (ranked by their importance):', [training_set.keys()[x] for x in top_feat], file=sys.stderr)
+    print('We use these best features (ranked by their importance):',
+          [training_set.keys()[x] for x in top_feat], file=sys.stderr)
 
     # Optionally scaling the features
     scaled_X = preprocessing.scale(X)
@@ -145,7 +149,6 @@ if __name__ == "__main__":
     print(classification_report(groups, predicted), file=sys.stderr)
 
     print('Confusion matrix on the training set:', file=sys.stderr)
-    print(confusion_matrix(groups, predicted), file=sys.stderr)
 
     print('=====', file=sys.stderr)
     print('Here goes cross-validation. Please wait a bit...', file=sys.stderr)
@@ -170,4 +173,7 @@ if __name__ == "__main__":
         print("F1 values on 10-fold cross-validation:", file=sys.stderr)
         print(cv_scores['test_f1_macro'], file=sys.stderr)
 
-    # visual(scaled_X, groups, classifier.classes_)
+    visual(scaled_X, groups, classifier.classes_)
+
+
+

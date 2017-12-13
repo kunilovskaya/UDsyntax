@@ -231,7 +231,7 @@ if __name__ == "__main__":
         metrics['MDD'].append(compre_diff)
 
     if mode == 'persentence':
-        print('Sentence\t', '\t'.join(metrics.keys()) + '\t', '\t'.join(sorted(relations.keys())), '\tClass')
+        print('Sentence\t', '\t'.join(metrics.keys()) + '\t', '\t'.join(sorted(relations.keys())), '\tgroup')
         for sent in range(len(sentences)):
             print(sent, '\t', end=' ')
             for metric in metrics:
@@ -244,7 +244,7 @@ if __name__ == "__main__":
             print(class_label)
 
     elif mode == 'perfile':
-        # print('File\t', '\t'.join(metrics.keys())+'\t', '\t'.join(sorted(relations.keys())), '\tClass')
+        # print('File\t', '\t'.join(metrics.keys())+'\t', '\t'.join(sorted(relations.keys())), '\tgroup')
         print(fileinput.filename().split('/')[1].split('.')[0] + '\t', end=' ')
         for metric in metrics:
             print(np.average(metrics[metric]), end='\t')

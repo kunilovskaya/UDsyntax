@@ -81,7 +81,7 @@ if __name__ == "__main__":
     print('Confusion matrix on the training set:')
     print(confusion_matrix(data["group"], predicted))
 
-    # visual(scaled_X, groups, classifier.classes_)
+    visual(scaled_X, groups, classifier.classes_)
 
     print('=====')
     print('Here goes cross-validation. Please wait a bit...')
