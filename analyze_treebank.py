@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # this script produces stats for 48 features used for ML experiments in (Kunilovskaya, Kutuzov, 2017) http://www.aclweb.org/anthology/W17-7606
 # use a corpus of *.conllu formated files as argument[1]
-# adjust "mode" in line 147
+# adjust mode('overview', 'perfile', 'persentence') in line 204
 # there are 2 approaches to calculate non-projectivety right below; code for mhd see line 134, for mdd 168
 
 import fileinput
