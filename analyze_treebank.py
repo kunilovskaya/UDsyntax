@@ -1,5 +1,8 @@
 #!/usr/bin/python3
-#
+# this script produces stats for 48 features used for ML experiments in (Kunilovskaya, Kutuzov, 2017) http://www.aclweb.org/anthology/W17-7606
+# use a corpus of *.conllu formated files as argument[1]
+# adjust "mode" in line 147
+# there are 2 approaches to calculate non-projectivety right below; code for mhd see line 134, for mdd 168
 
 import fileinput
 from collections import OrderedDict
@@ -30,6 +33,60 @@ def nonprojectivity(tree):
             n_arcs += 2
     nonprojective_ratio = n_arcs / arcs
     return nonprojectivesentence, nonprojective_ratio
+
+# def nonprojectivity(tree): # unlike the code above this function treats each case of crossing of arc as 1 case of non-projectivity, not two!
+#     in_sent = 0  # resettable counter to mark that the current sent has a non-projective dependency
+#     nonprojectivesentence = False
+#     tree_arc_count = []  # list of all ID,HEAD pairs in a tree; it needs to be reset before processing every next tree
+#     for w in tree:  # w is a quadriplet dep, head, token, rel
+#         try:
+#             a = int(round(float(w[0]), 0))
+#             b = int(round(float(w[1]), 0))
+#             if a > b:
+#                 tree_arc_count.append([b, a])
+#                 # print( 'Reversed', '\t', [b,a] )
+#             else:
+#                 tree_arc_count.append([a,
+#                                        b])
+#                 # this is a list of all arcs defined as 2-member-lists of start-end elements
+#                 # put in the right order: [[1, 2], [2, 18]]
+#         # print( 'Born straight', '\t', [a,b] )
+#         except ValueError:
+#             continue
+#             # print(w[0], w[1])
+#     # print >> out,'Lets inspect a random sample from the list of arcs: ',
+#     # tree_arc_count  # random.sample(self.tree_arc_count, 2))  # self.tree_arc_count[4: 10]
+#
+#     pairs = []  # produce a list of all pairwise combinations of arcs
+#     # of type AB AC AD BC BD CD (there is no AA and no ACandCA) from the tree_arc_count list
+#
+#     pairs_object = itertools.combinations(tree_arc_count, 2)
+#     for pair in pairs_object:
+#         pairs.append(pair)
+#     # print >> out, "Number of arcs combinations in this tree (", tree_wc, " words): ",
+#     # len(pairs)  # for the test set I expect =COMBIN(86,2) = 3655, but I need combos within a sent only!
+#     # print pairs
+#
+#     tples = 0
+#     for tple in pairs:
+#         tples += 1
+#         # print( tple[1][0], '/t', range(tple[0][0], tple[0][1]) )
+#         if tple[1][0] in range(tple[0][0], tple[0][1]) and not tple[1][1] in range(tple[0][0], tple[0][1]) and \
+#                         tple[1][0] != tple[0][0] and tple[1][1] != tple[0][1]:  # ([1,6],[2,7])
+#             nonprojectivesentence = True
+#             in_sent += 1
+#             # print('START of 2nd within the 1st arc', tple)
+#         if not tple[1][0] in range(tple[0][0], tple[0][1]) and tple[1][1] in range(tple[0][0], tple[0][1]) and \
+#                         tple[1][0] != tple[0][0] and tple[1][1] != tple[0][1]:  # ([1,6],[0,3])
+#             nonprojectivesentence = True
+#             in_sent += 1
+#             # print('END of of 2nd within the 1st arc', tple)
+#         else:
+#             continue
+#
+#     in_sent /= len(tree)
+#
+#     return nonprojectivesentence, in_sent
 
 
 def relation_distribution(tree, i_relations):
@@ -144,7 +201,7 @@ if __name__ == "__main__":
 
     modes = ['overview', 'perfile', 'persentence']
 
-    mode = modes[0]
+    mode = modes[0] # perfile mode needs to be started from generate.sh
 
     if filtering:
         relations = "acl acl:relcl advcl advmod amod appos aux aux:pass case cc ccomp compound conj cop csubj " \
@@ -202,7 +259,7 @@ if __name__ == "__main__":
     if filtering:
         sentences = [s for s in sentences if len(s) >= min_length]
 
-    for i in range(len(sentences)):  # why not for sentence in sentences:
+    for i in range(len(sentences)): 
         if i % 1000 == 0:
             print('I have already analyzed %s sentences' % i, file=sys.stderr)
 
