@@ -11,82 +11,82 @@ import numpy as np
 from igraph import *
 
 
-def nonprojectivity(tree):
-    if filtering:
-        arcs = len([w for w in tree if w[3] != 'punct'])
-    else:
-        arcs = len(tree)
-    n_arcs = 0
-    nonprojectivesentence = False
-    pairs = permutations(tree, 2)
-    for pair in pairs:
-        (dep0, head0, token0, rel0) = pair[0]
-        (dep1, head1, token1, rel1) = pair[1]
-        if rel0 == 'root' or rel1 == 'root':
-            continue
-        if filtering:
-            if rel0 == 'punct' or rel1 == 'punct':
-                continue
-        if dep0 < dep1 < head0 < head1 or head1 < head0 < dep1 < dep0 or dep1 < head0 < head1 < dep0 \
-                or dep0 < head1 < head0 < dep1 or head0 < dep1 < dep0 < head1 or head1 < dep0 < dep1 < head0:
-            nonprojectivesentence = True
-            n_arcs += 2
-    nonprojective_ratio = n_arcs / arcs
-    return nonprojectivesentence, nonprojective_ratio
-
-# def nonprojectivity(tree): # unlike the code above this function treats each case of crossing of arc as 1 case of non-projectivity, not two!
-#     in_sent = 0  # resettable counter to mark that the current sent has a non-projective dependency
+# def nonprojectivity(tree):
+#     if filtering:
+#         arcs = len([w for w in tree if w[3] != 'punct'])
+#     else:
+#         arcs = len(tree)
+#     n_arcs = 0
 #     nonprojectivesentence = False
-#     tree_arc_count = []  # list of all ID,HEAD pairs in a tree; it needs to be reset before processing every next tree
-#     for w in tree:  # w is a quadriplet dep, head, token, rel
-#         try:
-#             a = int(round(float(w[0]), 0))
-#             b = int(round(float(w[1]), 0))
-#             if a > b:
-#                 tree_arc_count.append([b, a])
-#                 # print( 'Reversed', '\t', [b,a] )
-#             else:
-#                 tree_arc_count.append([a,
-#                                        b])
-#                 # this is a list of all arcs defined as 2-member-lists of start-end elements
-#                 # put in the right order: [[1, 2], [2, 18]]
-#         # print( 'Born straight', '\t', [a,b] )
-#         except ValueError:
+#     pairs = permutations(tree, 2)
+#     for pair in pairs:
+#         (dep0, head0, token0, rel0) = pair[0]
+#         (dep1, head1, token1, rel1) = pair[1]
+#         if rel0 == 'root' or rel1 == 'root':
 #             continue
-#             # print(w[0], w[1])
-#     # print >> out,'Lets inspect a random sample from the list of arcs: ',
-#     # tree_arc_count  # random.sample(self.tree_arc_count, 2))  # self.tree_arc_count[4: 10]
-#
-#     pairs = []  # produce a list of all pairwise combinations of arcs
-#     # of type AB AC AD BC BD CD (there is no AA and no ACandCA) from the tree_arc_count list
-#
-#     pairs_object = itertools.combinations(tree_arc_count, 2)
-#     for pair in pairs_object:
-#         pairs.append(pair)
-#     # print >> out, "Number of arcs combinations in this tree (", tree_wc, " words): ",
-#     # len(pairs)  # for the test set I expect =COMBIN(86,2) = 3655, but I need combos within a sent only!
-#     # print pairs
-#
-#     tples = 0
-#     for tple in pairs:
-#         tples += 1
-#         # print( tple[1][0], '/t', range(tple[0][0], tple[0][1]) )
-#         if tple[1][0] in range(tple[0][0], tple[0][1]) and not tple[1][1] in range(tple[0][0], tple[0][1]) and \
-#                         tple[1][0] != tple[0][0] and tple[1][1] != tple[0][1]:  # ([1,6],[2,7])
+#         if filtering:
+#             if rel0 == 'punct' or rel1 == 'punct':
+#                 continue
+#         if dep0 < dep1 < head0 < head1 or head1 < head0 < dep1 < dep0 or dep1 < head0 < head1 < dep0 \
+#                 or dep0 < head1 < head0 < dep1 or head0 < dep1 < dep0 < head1 or head1 < dep0 < dep1 < head0:
 #             nonprojectivesentence = True
-#             in_sent += 1
-#             # print('START of 2nd within the 1st arc', tple)
-#         if not tple[1][0] in range(tple[0][0], tple[0][1]) and tple[1][1] in range(tple[0][0], tple[0][1]) and \
-#                         tple[1][0] != tple[0][0] and tple[1][1] != tple[0][1]:  # ([1,6],[0,3])
-#             nonprojectivesentence = True
-#             in_sent += 1
-#             # print('END of of 2nd within the 1st arc', tple)
-#         else:
-#             continue
-#
-#     in_sent /= len(tree)
-#
-#     return nonprojectivesentence, in_sent
+#             n_arcs += 2
+#     nonprojective_ratio = n_arcs / arcs
+#     return nonprojectivesentence, nonprojective_ratio
+
+def nonprojectivity(tree): # unlike the code above this function treats each case of crossing of arc as 1 case of non-projectivity, not two!
+    in_sent = 0  # resettable counter to mark that the current sent has a non-projective dependency
+    nonprojectivesentence = False
+    tree_arc_count = []  # list of all ID,HEAD pairs in a tree; it needs to be reset before processing every next tree
+    for w in tree:  # w is a quadriplet dep, head, token, rel
+        try:
+            a = int(round(float(w[0]), 0))
+            b = int(round(float(w[1]), 0))
+            if a > b:
+                tree_arc_count.append([b, a])
+                # print( 'Reversed', '\t', [b,a] )
+            else:
+                tree_arc_count.append([a,
+                                       b])
+                # this is a list of all arcs defined as 2-member-lists of start-end elements
+                # put in the right order: [[1, 2], [2, 18]]
+        # print( 'Born straight', '\t', [a,b] )
+        except ValueError:
+            continue
+            # print(w[0], w[1])
+    # print >> out,'Lets inspect a random sample from the list of arcs: ',
+    # tree_arc_count  # random.sample(self.tree_arc_count, 2))  # self.tree_arc_count[4: 10]
+
+    pairs = []  # produce a list of all pairwise combinations of arcs
+    # of type AB AC AD BC BD CD (there is no AA and no ACandCA) from the tree_arc_count list
+
+    pairs_object = itertools.combinations(tree_arc_count, 2)
+    for pair in pairs_object:
+        pairs.append(pair)
+    # print >> out, "Number of arcs combinations in this tree (", tree_wc, " words): ",
+    # len(pairs)  # for the test set I expect =COMBIN(86,2) = 3655, but I need combos within a sent only!
+    # print pairs
+
+    tples = 0
+    for tple in pairs:
+        tples += 1
+        # print( tple[1][0], '/t', range(tple[0][0], tple[0][1]) )
+        if tple[1][0] in range(tple[0][0], tple[0][1]) and not tple[1][1] in range(tple[0][0], tple[0][1]) and \
+                        tple[1][0] != tple[0][0] and tple[1][1] != tple[0][1]:  # ([1,6],[2,7])
+            nonprojectivesentence = True
+            in_sent += 1
+            # print('START of 2nd within the 1st arc', tple)
+        if not tple[1][0] in range(tple[0][0], tple[0][1]) and tple[1][1] in range(tple[0][0], tple[0][1]) and \
+                        tple[1][0] != tple[0][0] and tple[1][1] != tple[0][1]:  # ([1,6],[0,3])
+            nonprojectivesentence = True
+            in_sent += 1
+            # print('END of of 2nd within the 1st arc', tple)
+        else:
+            continue
+
+    in_sent /= len(tree)
+
+    return nonprojectivesentence, in_sent
 
 
 def relation_distribution(tree, i_relations):
