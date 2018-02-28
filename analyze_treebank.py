@@ -198,10 +198,16 @@ if __name__ == "__main__":
 
     filtering = True  # Filter out punctuation and short sentences?
     min_length = 3
-
+    
+    '''
+    overview mode requires corpus as one file
+    perfile mode needs to be started from generate.sh
+    
+    '''
+    
     modes = ['overview', 'perfile', 'persentence']
 
-    mode = modes[0] # perfile mode needs to be started from generate.sh
+    mode = modes[1]
 
     if filtering:
         relations = "acl acl:relcl advcl advmod amod appos aux aux:pass case cc ccomp compound conj cop csubj " \
