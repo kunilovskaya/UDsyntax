@@ -7,6 +7,7 @@
 import fileinput
 from collections import OrderedDict
 from itertools import permutations
+import itertools
 import numpy as np
 from igraph import *
 
