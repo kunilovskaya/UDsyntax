@@ -207,7 +207,7 @@ if __name__ == "__main__":
     
     modes = ['overview', 'perfile', 'persentence']
 
-    mode = modes[1]
+    mode = modes[1] # mode[1] has to be started from generate.py usage: sh generate.sh en_prof
 
     if filtering:
         relations = "acl acl:relcl advcl advmod amod appos aux aux:pass case cc ccomp compound conj cop csubj " \
@@ -308,7 +308,8 @@ if __name__ == "__main__":
 
     elif mode == 'perfile':
         # print('doc\t', '\t'.join(metrics.keys())+'\t', '\t'.join(sorted(relations.keys())), '\tgroup')
-        print(fileinput.filename().split('/')[1].split('.')[0] + '\t', end=' ')
+        print(fileinput.filename().split('/')[1].split('.')[0] + '\t', end=' ') ## usage: sh generate.sh en_prof
+        
         for metric in metrics:
             print(np.average(metrics[metric]), end='\t')
         for rel in sorted(relations.keys()):
